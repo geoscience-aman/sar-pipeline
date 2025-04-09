@@ -227,6 +227,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/b7/23/19fbca3ca1614c69b7bc1aa15839ef355b8ccf434e1ad8b190f7ebfdc261/boto3-1.37.27-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/c3/48/f2670866a36d2dd68f7c93897fb9ec6c693bca1bb73cb867a173c2ad92c3/botocore-1.37.27-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/a4/29/db12aa4dda81580be1999824a689bd52aa40061fc12c9ccdc3feab5ea718/dateparser-1.2.0-py2.py3-none-any.whl
+      - pypi: git+https://github.com/GeoscienceAustralia/dem-handler.git#98f4bcbd337f09ff639ebee0ec744c9af341b143
       - pypi: https://files.pythonhosted.org/packages/a7/da/3c137006ff5f0433f0fb076b1ebe4a7bf7b5ee1e8811b5486af98b500dd5/h5py-3.13.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/31/b4/b9b800c45527aadd64d5b442f9b932b00648617eb5d63d2c7a6587b7cafc/jmespath-1.0.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/08/94/6f93e55886cae4076dfe1c5c0a768963f6faca34d7cd27a2ee6800e29387/pystac-1.12.2-py3-none-any.whl
@@ -465,6 +466,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/b7/23/19fbca3ca1614c69b7bc1aa15839ef355b8ccf434e1ad8b190f7ebfdc261/boto3-1.37.27-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/c3/48/f2670866a36d2dd68f7c93897fb9ec6c693bca1bb73cb867a173c2ad92c3/botocore-1.37.27-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/a4/29/db12aa4dda81580be1999824a689bd52aa40061fc12c9ccdc3feab5ea718/dateparser-1.2.0-py2.py3-none-any.whl
+      - pypi: git+https://github.com/GeoscienceAustralia/dem-handler.git#98f4bcbd337f09ff639ebee0ec744c9af341b143
       - pypi: https://files.pythonhosted.org/packages/a7/da/3c137006ff5f0433f0fb076b1ebe4a7bf7b5ee1e8811b5486af98b500dd5/h5py-3.13.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/2c/e1/e6716421ea10d38022b952c159d5161ca1193197fb744506875fbb87ea7b/iniconfig-2.1.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/31/b4/b9b800c45527aadd64d5b442f9b932b00648617eb5d63d2c7a6587b7cafc/jmespath-1.0.1-py3-none-any.whl
@@ -945,6 +947,14 @@ packages:
   purls: []
   size: 760229
   timestamp: 1685695754230
+- pypi: git+https://github.com/GeoscienceAustralia/dem-handler.git#98f4bcbd337f09ff639ebee0ec744c9af341b143
+  name: dem-handler
+  version: '0.1'
+  requires_dist:
+  - boto3>=1.37.12,<2
+  - geopandas>=1.0.1,<2
+  - requests>=2.32.3,<3
+  requires_python: '>=3.8'
 - conda: https://conda.anaconda.org/conda-forge/noarch/dill-0.3.9-pyhd8ed1ab_1.conda
   sha256: 499be2f8e4397a46249e8e500535795704af27e56360ae0c964904140b41454a
   md5: 5e11310fca410e9f31381157079dee55
@@ -2935,7 +2945,7 @@ packages:
 - pypi: .
   name: sar-pipeline
   version: '0.1'
-  sha256: ae4b53b466c28f90106ca8340e95250d2b65f95f92252f53647ee8a3782cd27f
+  sha256: bc204810b2c4581b1b66bcb02745e0ddee368974896d22c99825263ebb845218
   requires_dist:
   - asf-search>=8.1.1
   - boto3>=1.37.27
@@ -2944,6 +2954,7 @@ packages:
   - pystac>=1.12.2
   - ruamel-yaml>=0.18.10
   - s1-orbits>=0.1.3
+  - dem-handler @ git+https://github.com/GeoscienceAustralia/dem-handler.git
   requires_python: '>=3.8'
   editable: true
 - conda: https://conda.anaconda.org/conda-forge/linux-64/scikit-learn-1.6.1-py312h7a48858_0.conda
