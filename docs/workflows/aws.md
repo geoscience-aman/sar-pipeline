@@ -17,7 +17,7 @@ To link a **RTC_S1** product to the appropriate  **RTC_S1_STATIC** layers, the *
 
 After each run is completed, the files will be uploaded to a specified S3 bucket location. A unique subpath for each product is created in the workflow.
 
-## Examples
+### Example outputs
 
 Example outputs of the **RTC_S1** and **RTC_S1_STATIC** workflows can be found here:
 - **RTC_S1** -> https://deant-data-public-dev.s3.ap-southeast-2.amazonaws.com/index.html?prefix=experimental-linkage/s1_rtc_c1/t070_149815_iw3/2022/1/1/
@@ -41,6 +41,7 @@ The AWS pipeline runs using a docker container. At runtime, the script [run_aws_
 --s3_project_folder="experimental"
 --collection="s1_rtc_c1"
 # Required inputs for linking RTC_S1_STATIC to RTC_S1
+# Assumes that a RTC_S1_STATIC products exist for all RTC_S1 bursts being processed
 --link_static_layers=false           
 --linked_static_layers_s3_bucket="deant-data-public-dev"
 --linked_static_layers_s3_project_folder="experimental" 

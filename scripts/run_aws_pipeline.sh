@@ -1,30 +1,26 @@
 #!/bin/bash
 
-## -- WORKFLOW INPUTS FOR PRODUCT CREATION --
-
-# Settings for the products made by the workflow - RTC_S1_STATIC or RTC_S1
-scene=""                    # scene id
-burst_ids=()                # list of burst_ids or line separated .txt file
-resolution=20               # resolution in metres
-output_crs=""               # crs integer (e.g. 3031). if not specified, local UTM zone used
-dem="cop_glo30"             # type of DEM to use
-product="RTC_S1"            # Created product - RTC_S1_STATIC or RTC_S1
-s3_bucket="deant-data-public-dev"   # S3 bucket to upload to
-s3_project_folder="experimental"    # folder within the S3 bucket to upload to 
-collection="s1_rtc_c1"      # Collection of products e.g. s1_rtc_c1 or s1_rtc_static_c1
+# See docs/workflows/aws.md for instructions and argument descriptions
+## -- WORKFLOW INPUTS FOR PRODUCT CREATION -> RTC_S1 or RTC_S1_STATIC --
+scene=""
+burst_ids=()
+resolution=20
+output_crs=""
+dem="cop_glo30"
+product="RTC_S1"
+s3_bucket="deant-data-public-dev"
+s3_project_folder="experimental"
+collection="s1_rtc_c1"
+## -- WORKFLOW INPUTS TO LINK RTC_S1_STATIC in RTC_S1 metadata--
+# Assumes that a RTC_S1_STATIC products exist for all RTC_S1 bursts being processed
+link_static_layers=false
+linked_static_layers_s3_bucket="deant-data-public-dev"
+linked_static_layers_s3_project_folder="experimental"
+linked_static_layers_collection="s1_rtc_static_c1"
 
 # Final product output paths follow the following structure
 # RTC_S1 -> s3_bucket/s3_project_folder/collection/burst_id/year/month/day/*files
 # RTC_S1_STATIC -> s3_bucket/s3_project_folder/collection/burst_id/*files
-
-## -- WORKFLOW INPUTS TO LINK RTC_S1_STATIC in RTC_S1 metadata--
-
-# Only considered when product='RTC_S1'
-# Assumes that a RTC_S1_STATIC products exist for all RTC_S1 bursts being processed
-link_static_layers=false            # Flag to link RTC_S1_STATIC to RTC_S1
-linked_static_layers_s3_bucket="deant-data-public-dev" # bucket where RTC_S1_STATIC stored
-linked_static_layers_s3_project_folder="experimental" # folder within bucket where RTC_S1_STATIC stored
-linked_static_layers_collection="s1_rtc_static_c1" # collection where RTC_S1_STATIC stored
 
 # Parse named arguments
 while [[ "$#" -gt 0 ]]; do
