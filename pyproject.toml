@@ -80,11 +80,12 @@ test-all = "pytest"
 test-pipeline = "pytest tests/sar_pipeline/"
 test-nci-filesystem = "pytest tests/filesystem"
 
+[tool.pixi.feature.dev.dependencies]
+pre-commit = ">=4.2.0"
+pytest = ">=8.3.5"
+
 [tool.pixi.tasks]
 export-conda = """
 pixi workspace export conda-environment environment.yml && \
 sed -i 's/^name: default$/name: sar-pipeline/' environment.yml
 """
-
-[dependency-groups]
-dev = ["pytest"]
