@@ -1,0 +1,8 @@
+repos:
+-   repo: local
+    hooks:
+    -   id: pixi-install
+        name: Pixi Install
+        entry: pixi install --all --locked
+        language: system
+        pass_filenames: false      
