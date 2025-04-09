@@ -238,7 +238,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/e7/b0/c23bd61e1b32c9b96fbca996c87784e196a812da8d621d8d04851f6c8181/tenacity-8.2.2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/c2/14/e2a54fabd4f08cd7af1c07030603c3356b74da07f7cc056e600436edfa17/tzlocal-5.3.1-py3-none-any.whl
       - pypi: .
-  test:
+  dev:
     channels:
     - url: https://conda.anaconda.org/conda-forge/
     - url: https://conda.anaconda.org/avalentino/
@@ -2935,7 +2935,7 @@ packages:
 - pypi: .
   name: sar-pipeline
   version: '0.1'
-  sha256: ae4b53b466c28f90106ca8340e95250d2b65f95f92252f53647ee8a3782cd27f
+  sha256: 4c62d2c4866923c5f90b5e78f93c1cd6fae473ef00deb1daafb093d458363e56
   requires_dist:
   - asf-search>=8.1.1
   - boto3>=1.37.27
