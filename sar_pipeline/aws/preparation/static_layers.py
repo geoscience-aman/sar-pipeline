@@ -106,7 +106,7 @@ def get_burst_ids_for_scene(
     return burst_ids
 
 
-def make_static_layer_url(
+def make_static_layer_base_url(
     static_layers_s3_bucket: str,
     static_layers_collection: str,
     static_layers_s3_project_folder: str,
