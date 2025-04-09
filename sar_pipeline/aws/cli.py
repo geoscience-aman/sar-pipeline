@@ -8,7 +8,7 @@ from sar_pipeline.aws.preparation.scenes import download_slc_from_asf
 from sar_pipeline.aws.preparation.orbits import download_orbits_from_s3
 from sar_pipeline.aws.preparation.static_layers import (
     check_static_layers_in_s3,
-    make_static_layer_url,
+    make_static_layer_base_url,
 )
 from sar_pipeline.aws.preparation.config import RTCConfigManager
 from sar_pipeline.aws.metadata.stac import BurstH5toStacManager
@@ -216,7 +216,7 @@ def get_data_for_scene_and_make_run_config(
 
     if link_static_layers:
         # add the static layer base url
-        static_layer_base_url = make_static_layer_url(
+        static_layer_base_url = make_static_layer_base_url(
             linked_static_layers_s3_bucket,
             linked_static_layers_collection,
             linked_static_layers_s3_project_folder,
