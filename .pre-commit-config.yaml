@@ -2,7 +2,12 @@ repos:
 -   repo: local
     hooks:
     -   id: pixi-install
-        name: Pixi Install
+        name: Pixi install
         entry: pixi install --all --locked
         language: system
-        pass_filenames: false      
+        pass_filenames: false
+    -   id: pixi-export-conda
+        name: Pixi export conda environment.yml      
+        entry: pixi run export-conda
+        language: system
+        pass_filenames: false
