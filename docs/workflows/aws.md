@@ -151,14 +151,14 @@ docker run --env-file env.secret -it sar-pipeline --scene S1A_IW_SLC__1SSH_20220
 
 
 ```bash
-docker run --env-file env.secret -it sar-pipeline \
+docker run --env-file env.secret -v /data/working:/home/rtc_user/working -it sar-pipeline \
 --scene S1A_IW_SLC__1SSH_20220101T124744_20220101T124814_041267_04E7A2_1DAD \
 --burst_id_list t070_149815_iw3 \
 --output_crs 3031 \
 --product RTC_S1_STATIC \
 --s3_bucket deant-data-public-dev \
 --collection s1_rtc_static_c1 \
---s3_project_folder "static-layers" 
+--s3_project_folder experimental/static-layers
 ```
 
 Note, any scene that covers the given burst could be used. For example, the following scene captured 12 days earlier on the same repeat orbit could be used `S1A_IW_SLC__1SSH_20211220T124745_20211220T124815_041092_04E1C2_0475`
@@ -177,11 +177,11 @@ docker run --env-file env.secret -it sar-pipeline \
 --product RTC_S1 \
 --s3_bucket deant-data-public-dev \
 --collection s1_rtc_c1 \
---s3_project_folder nrb \
+--s3_project_folder experimental/nrb \
 --link_static_layers \
 --linked_static_layers_s3_bucket deant-data-public-dev \
 --linked_static_layers_collection s1_rtc_static_c1 \
---linked_static_layers_s3_project_folder static-layers
+--linked_static_layers_s3_project_folder experimental/static-layers
 ```
 
 ### 3. Ensure the files are linked in the STAC metadata
