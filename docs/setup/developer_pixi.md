@@ -57,7 +57,7 @@ There are a few things to keep in mind when using `pixi`:
 
 With this in mind, the following sections cover various how-to's for our development environment:
 
-* [Add packages](#adding-a-new-package)
+* [Add packages](#adding-a-package)
 * [Keep the pyproject.yml file tidy](#tidying-up-the-pyprojecttoml-file)
 * [Run commands](#running-commands)
 * [Create and run tasks](#creating-and-running-tasks)
