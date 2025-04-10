@@ -19,12 +19,11 @@ git clone https://github.com/GeoscienceAustralia/sar-pipleine.git
 ### Installing the package
 We have different recommendations for how you install from source depending on whether you are using the package, or developing it. 
 
-- If you want to use the package, without modifying the code, see [user set up](install_and_use.md)
 - If you are a developer, see [developer set up](developer.md)
+- If you want to use the package, without modifying the code, see [user set up](install_and_use.md)
 
 ## Alternatives
 
 On the NCI, we are in the process of developing a way of accessing this package via a module. 
-This is still in development.
-
-- If you want to use the repository in NCI jobs, see [NCI Module set up](nci.md)
+> **_NOTE:_** NCI module approach is still under development.
+> See [NCI Module set up](nci.md)
