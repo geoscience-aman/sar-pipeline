@@ -9,6 +9,7 @@ version="0.1"
 
 RUN yum -y update &&\
 yum -y install curl &&\
+yum install git -y &&\
 adduser rtc_user
 
 RUN mkdir -p /home/rtc_user/OPERA
