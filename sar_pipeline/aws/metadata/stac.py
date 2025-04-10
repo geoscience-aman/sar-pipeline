@@ -10,6 +10,7 @@ import datetime
 import re
 import numpy as np
 
+import sar_pipeline
 from sar_pipeline.aws.metadata.h5 import H5Manager
 from sar_pipeline.utils.spatial import polygon_str_to_geojson, convert_bbox
 from sar_pipeline.aws.metadata.filetypes import (
@@ -59,6 +60,7 @@ class BurstH5toStacManager:
         self.h5 = H5Manager(self.h5_filepath)  # class to help get values from .h5 file
         self.id = self.h5_filepath.stem
         self.product = self._check_valid_product(product)
+        self.burst_id = self.h5.search_value("burstID")
         self.collection = collection
         self.stac_extensions = [
             "https://stac-extensions.github.io/product/v0.1.0/schema.json",
@@ -216,7 +218,7 @@ class BurstH5toStacManager:
         self.item.properties["sar:observation_direction"] = self.h5.search_value(
             "lookDirection"
         )
-        self.item.properties["sar:relative_burst"] = self.h5.search_value("burstID")
+        self.item.properties["sar:relative_burst"] = self.burst_id
         self.item.properties["sar:beam_ids"] = self.h5.search_value("subSwathID")
 
         # add altimetry stac extension properties
@@ -257,62 +259,60 @@ class BurstH5toStacManager:
             "isce3": self.h5.search_value("algorithms/isce3Version"),
             "s1Reader": self.h5.search_value("algorithms/s1ReaderVersion"),
             "OPERA-adt/RTC": self.h5.search_value("algorithms/softwareVersion"),
-            "sar-pipeline": "",  # TODO get from __version__
+            "sar-pipeline": sar_pipeline.__version__,
             "dem-handler": "",  # TODO get from __version__
         }
 
-        # proposed sar-ard stac extension properties
-        self.item.properties["sar-ard:source_id"] = self.h5.search_value(
-            "l1SlcGranules"
-        )
-        self.item.properties["sar-ard:pixel_spacing_x"] = abs(
+        # proposed nrb stac extension properties
+        self.item.properties["nrb:source_id"] = self.h5.search_value("l1SlcGranules")
+        self.item.properties["nrb:pixel_spacing_x"] = abs(
             self.h5.search_value("xCoordinateSpacing")
         )
-        self.item.properties["sar-ard:pixel_spacing_y"] = abs(
+        self.item.properties["nrb:pixel_spacing_y"] = abs(
             self.h5.search_value("yCoordinateSpacing")
         )
-        self.item.properties["sar-ard:resolution_x"] = abs(
+        self.item.properties["nrb:resolution_x"] = abs(
             self.h5.search_value("xCoordinateSpacing")
         )
-        self.item.properties["sar-ard:resolution_y"] = abs(
+        self.item.properties["nrb:resolution_y"] = abs(
             self.h5.search_value("yCoordinateSpacing")
         )
-        self.item.properties["sar-ard:speckle_filter_applied"] = self.h5.search_value(
+        self.item.properties["nrb:speckle_filter_applied"] = self.h5.search_value(
             "filteringApplied"
         )
-        self.item.properties["sar-ard:speckle_filter_type"] = ""
-        self.item.properties["sar-ard:speckle_filter_window"] = ()
-        self.item.properties["sar-ard:measurement_type"] = self.h5.search_value(
+        self.item.properties["nrb:speckle_filter_type"] = ""
+        self.item.properties["nrb:speckle_filter_window"] = ()
+        self.item.properties["nrb:measurement_type"] = self.h5.search_value(
             "outputBackscatterNormalizationConvention"
         )
-        self.item.properties["sar-ard:measurement_convention"] = self.h5.search_value(
+        self.item.properties["nrb:measurement_convention"] = self.h5.search_value(
             "outputBackscatterExpressionConvention"
         )
-        self.item.properties["sar-ard:conversion_eq"] = self.h5.search_value(
+        self.item.properties["nrb:conversion_eq"] = self.h5.search_value(
             "outputBackscatterDecibelConversionEquation"
         )
         if self.product == "RTC_S1":
-            self.item.properties["sar-ard:noise_removal_applied"] = (
-                self.h5.search_value("noiseCorrectionApplied")
+            self.item.properties["nrb:noise_removal_applied"] = self.h5.search_value(
+                "noiseCorrectionApplied"
             )
 
         # additional non required parameters for atmosphere that would be good to have
-        self.item.properties["sar-ard:static_tropospheric_correction_applied"] = (
+        self.item.properties["nrb:static_tropospheric_correction_applied"] = (
             self.h5.search_value("staticTroposphericGeolocationCorrectionApplied")
         )
-        self.item.properties["sar-ard:wet_tropospheric_correction_applied"] = (
+        self.item.properties["nrb:wet_tropospheric_correction_applied"] = (
             self.h5.search_value("wetTroposphericGeolocationCorrectionApplied")
         )
-        self.item.properties["sar-ard:bistatic_correction_applied"] = (
-            self.h5.search_value("bistaticDelayCorrectionApplied")
+        self.item.properties["nrb:bistatic_correction_applied"] = self.h5.search_value(
+            "bistaticDelayCorrectionApplied"
         )
-        self.item.properties["sar-ard:ionospheric_correction_applied"] = False
+        self.item.properties["nrb:ionospheric_correction_applied"] = False
 
         # TODO fill with study result values
-        self.item.properties["sar-ard:geometric_accuracy_ALE"] = "TODO"
-        self.item.properties["sar-ard:geometric_accuracy_rmse"] = "TODO"
-        self.item.properties["sar-ard:geometric_accuracy_range"] = "TODO"
-        self.item.properties["sar-ard:geometric_accuracy_azimuth"] = "TODO"
+        self.item.properties["nrb:geometric_accuracy_ALE"] = "TODO"
+        self.item.properties["nrb:geometric_accuracy_rmse"] = "TODO"
+        self.item.properties["nrb:geometric_accuracy_range"] = "TODO"
+        self.item.properties["nrb:geometric_accuracy_azimuth"] = "TODO"
 
         # add the storage stac extension properties
         self.item.properties["storage:type"] = "aws-s3"
@@ -491,6 +491,7 @@ class BurstH5toStacManager:
                             "shadow": 1,
                             "layover": 2,
                             "shadow_and_layover": 3,
+                            "invalid_sample": 255,
                         }
             else:
                 extra_fields = {}
@@ -508,12 +509,15 @@ class BurstH5toStacManager:
                 ),
             )
 
-    def add_linked_static_layer_assets(self):
-
-        burst_id = self.item.properties["sar:relative_burst"]
+    def add_linked_static_layer_assets_and_link(self):
+        """add the static layer assets to STAC the metadata file. This is
+        achieved by reading in the STAC metadata file associated with the
+        static layers themselves"""
 
         static_layer_url = self.h5.search_value("staticLayersDataAccess")
-        burst_static_layer_stac_url = f"{static_layer_url}/{burst_id}/metadata.json"
+        burst_static_layer_stac_url = (
+            f"{static_layer_url}/{self.burst_id}/metadata.json"
+        )
 
         try:
             # Send HTTP GET request
@@ -527,10 +531,18 @@ class BurstH5toStacManager:
                 f"Request error: {e}"
             ) from e
 
+        # add the link to the static layer metadatafile to the links
+        self.item.add_link(
+            pystac.Link(
+                rel="static-layers",
+                target=f"burst_static_layer_stac_url",
+            )
+        )
+
         # Load the JSON content into a Python dictionary
         burst_static_layer_stac = response.json()
 
-        # iterate through the static layer assets and add them
+        # iterate through the static layer assets and add them to the file
         for asset_title in burst_static_layer_stac["assets"].keys():
 
             # data for each asset

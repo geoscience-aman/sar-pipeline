@@ -221,7 +221,7 @@ def get_data_for_scene_and_make_run_config(
             linked_static_layers_collection,
             linked_static_layers_s3_project_folder,
         )
-        logger.info(f"static layer url : {static_layer_base_url}")
+        logger.info(f"static layer base url : {static_layer_base_url}")
         RTC_RUN_CONFIG.set(
             f"{gk}.product_group.static_layers_data_access", str(static_layer_base_url)
         )
@@ -339,14 +339,15 @@ def make_rtc_opera_stac_and_upload_bursts(
         burst_stac_manager.add_properties_from_h5()
         # add the assets to the stac doc
         burst_stac_manager.add_assets_from_folder(burst_folder)
-        if link_static_layers:
-            # link to static layer metadata is in the .h5 file
-            burst_stac_manager.add_linked_static_layer_assets()
         # add additional links that will rarely change
         burst_stac_manager.add_fixed_links()
         # add links that can change
         burst_stac_manager.add_dynamic_links_from_h5()
         # add the link to self/metadata
+        if link_static_layers:
+            # link to static layer metadata is in the .h5 file
+            # use this to map assets to the file
+            burst_stac_manager.add_linked_static_layer_assets_and_link()
         stac_filename = "metadata.json"
         burst_stac_manager.add_self_link(filename=stac_filename)
         # save the metadata
