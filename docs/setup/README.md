@@ -13,7 +13,7 @@ Navigate to the place you want to keep your development.
 
 Clone the repository into the chosen directory using
 ```bash
-git clone https://github.com/GeoscienceAustralia/sar-pipleine.git
+git clone https://github.com/GeoscienceAustralia/sar-pipeline.git
 ```
 
 ### Installing the package
