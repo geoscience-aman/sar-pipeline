@@ -19,8 +19,8 @@ git clone https://github.com/GeoscienceAustralia/sar-pipleine.git
 ### Installing the package
 We have different recommendations for how you install from source depending on whether you are using the package, or developing it. 
 
-- If you are a developer, see [developer set up](developer.md)
-- If you want to use the package, without modifying the code, see [user set up](install_and_use.md)
+- If you are a developer, see [developer set up](developer_pixi.md)
+- If you want to use the package, without modifying the code, see [user set up](user_conda.md)
 
 ## Alternatives
 
