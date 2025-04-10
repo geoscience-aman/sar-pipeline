@@ -1,6 +1,6 @@
-# sar-pipeline
+# sar-pipeline documentation
 
-This repository contains code for running SAR processing pipelines on the NCI.
+This repository contains code for running SAR processing pipelines on the NCI and AWS.
 
 ## Environment set up
 
