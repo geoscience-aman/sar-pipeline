@@ -158,7 +158,7 @@ docker run --env-file env.secret -it sar-pipeline \
 --product RTC_S1_STATIC \
 --s3_bucket deant-data-public-dev \
 --collection s1_rtc_static_c1 \
---s3_project_folder "experimental-linkage" 
+--s3_project_folder "static-layers" 
 ```
 
 Note, any scene that covers the given burst could be used. For example, the following scene captured 12 days earlier on the same repeat orbit could be used `S1A_IW_SLC__1SSH_20211220T124745_20211220T124815_041092_04E1C2_0475`
@@ -177,21 +177,21 @@ docker run --env-file env.secret -it sar-pipeline \
 --product RTC_S1 \
 --s3_bucket deant-data-public-dev \
 --collection s1_rtc_c1 \
---s3_project_folder experimental-linkage \
+--s3_project_folder nrb \
 --link_static_layers \
 --linked_static_layers_s3_bucket deant-data-public-dev \
 --linked_static_layers_collection s1_rtc_static_c1 \
---linked_static_layers_s3_project_folder experimental-linkage
+--linked_static_layers_s3_project_folder static-layers
 ```
 
 ### 3. Ensure the files are linked in the STAC metadata
 
-By opening the metadata file and checking the assets links, you should see the links reference the static layers. For example, compare the href in the product metadata below.
+By opening the metadata file and checking the assets links, you should see the links for auxiliary products reference the static layers. For example, compare the href in the product metadata below. HH data belongs to RTC_S1 and number_of_looks belongs to RTC_S1_STATIC
 
 ```json
  "assets": {
         "HH": {
-            "href": "https://deant-data-public-dev.s3.ap-southeast-2.amazonaws.com/experimental-linkage/s1_rtc_c1/t070_149815_iw3/2022/1/1/OPERA_L2_RTC-S1_T070-149815-IW3_20220101T124752Z_20250408T025401Z_S1A_20_v0.1_HH.tif",
+            "href": "https://deant-data-public-dev.s3.ap-southeast-2.amazonaws.com/nrb/s1_rtc_c1/t070_149815_iw3/2022/1/1/OPERA_L2_RTC-S1_T070-149815-IW3_20220101T124752Z_20250408T025401Z_S1A_20_v0.1_HH.tif",
             "type": "image/tiff; application=geotiff; profile=cloud-optimized",
             "title": "HH",
             "description": "HH polarised backscatter",
@@ -220,7 +220,7 @@ By opening the metadata file and checking the assets links, you should see the l
             ]
         },
         "number_of_looks": {
-            "href": "https://deant-data-public-dev.s3.ap-southeast-2.amazonaws.com/experimental-linkage/s1_rtc_static_c1/t070_149815_iw3/OPERA_L2_RTC-S1-STATIC_T070-149815-IW3_20010101_20250408T012421Z_S1A_20_v1.0.2_number_of_looks.tif",
+            "href": "https://deant-data-public-dev.s3.ap-southeast-2.amazonaws.com/static-layers/s1_rtc_static_c1/t070_149815_iw3/OPERA_L2_RTC-S1-STATIC_T070-149815-IW3_20010101_20250408T012421Z_S1A_20_v1.0.2_number_of_looks.tif",
             "type": "image/tiff; application=geotiff; profile=cloud-optimized",
             "title": "number_of_looks",
             "description": "number of looks",
