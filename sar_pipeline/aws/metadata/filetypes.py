@@ -6,10 +6,10 @@ REQUIRED_ASSET_FILETYPES = {
         "_HV.tif",
         "_VV.tif",
         "_VH.tif",
+        "_mask.tif",
         ".png",
     ],
     "RTC_S1_STATIC": [
-        "_mask.tif",
         "_number_of_looks.tif",
         "_rtc_anf_gamma0_to_beta0.tif",
         "_rtc_anf_gamma0_to_sigma0.tif",
