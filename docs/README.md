@@ -14,4 +14,4 @@ See [Project set up](setup/README.md)
 
 ## Workflows
 
-For more information see [Workflows](docs/workflows/README.md)
+For more information see [Workflows](workflows/README.md)
