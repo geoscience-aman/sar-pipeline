@@ -9,8 +9,8 @@ See [Project set up](setup/README.md)
 
 ## Environment set up
 
-For developers, we recommend pixi: see [Developer set up](setup/developer_pixi.md)
-For users, we recommend micromamba: see [User set up](setup/user_conda.md)
+* For developers, we recommend pixi: see [Developer set up](setup/developer_pixi.md)
+* For users, we recommend micromamba: see [User set up](setup/user_conda.md)
 
 ## Workflows
 
