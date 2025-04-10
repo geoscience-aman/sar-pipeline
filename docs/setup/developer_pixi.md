@@ -46,6 +46,8 @@ The first time you set up the repo, install the pre-commit hooks by running
  pixi run -e dev pre-commit install
  ```
 
+ This will set up the [required git hook scripts](https://pre-commit.com/#3-install-the-git-hook-scripts). 
+
 ## Developing with pixi
 There are a few things to keep in mind when using `pixi`:
 
