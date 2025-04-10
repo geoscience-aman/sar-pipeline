@@ -83,6 +83,7 @@ test-nci-filesystem = "pytest tests/filesystem"
 [tool.pixi.feature.dev.dependencies]
 pre-commit = ">=4.2.0"
 pytest = ">=8.3.5"
+coverage = ">=7.8.0"
 
 [tool.pixi.tasks]
 export-conda = """

@@ -3,7 +3,7 @@ repos:
     hooks:
     -   id: pixi-install
         name: Pixi install
-        entry: pixi install --all --locked
+        entry: pixi install --all
         language: system
         pass_filenames: false
     -   id: pixi-export-conda
