@@ -77,10 +77,7 @@ def download_orbits_from_datahub(
     ValueError
         If required credentials are missing.
     """
-    # The logic in eof.download.main() tries CDSE first by default.
-    # Passing this to the force_asf argument skips checking CDSE first and goes directly to ASF.
-    if source == "ASF":
-        use_asf = True
+    
 
     if source == "CDSE":
         cdse_user = cdse_user or os.getenv("CDSE_LOGIN")
@@ -104,13 +101,13 @@ def download_orbits_from_datahub(
         raise ValueError(f"Source must be either 'CDSE' or 'ASF', got '{source}'.")
 
     logger.info(f"Starting EOF download from {source}...")
-
+    # The logic in eof.download.main() tries CDSE first by default. set force_asf by source
     return eof.download.main(
         sentinel_file=sentinel_file,
         save_dir=save_dir,
         cdse_user=cdse_user,
         cdse_password=cdse_password,
-        force_asf=use_asf,
+        force_asf=source == "ASF",
         asf_user=asf_user,
         asf_password=asf_password,
     )
