@@ -161,7 +161,14 @@ def get_data_for_scene_and_make_run_config(
     # # download the orbits
     logger.info(f"Downloading Orbits for scene : {scene}")
     orbit_folder = download_folder / "orbits"
-    ORBITS_PATH = download_orbits_from_datahub(sentinel_file = scene + '.SAFE', save_dir = orbit_folder)
+    ORBIT_PATHS = download_orbits_from_datahub(
+        sentinel_file=scene + ".SAFE", save_dir=orbit_folder
+    )
+    if len(ORBIT_PATHS) > 1:
+        raise ValueError(
+            f"{len(ORBIT_PATHS)} orbit paths found for scene. Expecting 1."
+        )
+    logger.info(f"File downloaded to : {ORBIT_PATHS[0]}")
 
     # # download the dem
     dem_folder = download_folder / "dem"
@@ -191,7 +198,7 @@ def get_data_for_scene_and_make_run_config(
         f"{gk}.input_file_group.source_data_access",
         asf_scene_metadata.properties["url"],
     )
-    RTC_RUN_CONFIG.set(f"{gk}.input_file_group.orbit_file_path", [str(ORBITS_PATH)])
+    RTC_RUN_CONFIG.set(f"{gk}.input_file_group.orbit_file_path", [str(ORBIT_PATHS[0])])
     RTC_RUN_CONFIG.set(f"{gk}.dynamic_ancillary_file_group.dem_file", str(DEM_PATH))
 
     # set the dem input source

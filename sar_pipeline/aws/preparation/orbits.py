@@ -8,6 +8,7 @@ from typing import Literal, Optional
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 def download_orbits_from_s3(
     scene: str, download_folder: Path, make_folder=True
 ) -> Path:
@@ -37,6 +38,7 @@ def download_orbits_from_s3(
     logger.info(f"Orbit file downloaded : {orbit_file}")
     return orbit_file
 
+
 def download_orbits_from_datahub(
     sentinel_file: Path,
     save_dir: Path,
@@ -45,7 +47,7 @@ def download_orbits_from_datahub(
     cdse_password: Optional[str] = None,
     asf_user: Optional[str] = None,
     asf_password: Optional[str] = None,
-) -> Path:
+) -> list[Path]:
     """
     Downloads precise/restituted orbit files (.EOF files) for the given Sentinel-1 SAFE file from the
     Copernicus Data Space Ecosystem (CDSE) or Alaska Satellite Facility (ASF) datahubs.
@@ -69,15 +71,14 @@ def download_orbits_from_datahub(
 
     Returns
     -------
-    Path
-        Path to the downloaded EOF file.
+    list[Path]
+        List of paths for downloaded orbit files
 
     Raises
     ------
     ValueError
         If required credentials are missing.
     """
-    
 
     if source == "CDSE":
         cdse_user = cdse_user or os.getenv("CDSE_LOGIN")
@@ -101,6 +102,7 @@ def download_orbits_from_datahub(
         raise ValueError(f"Source must be either 'CDSE' or 'ASF', got '{source}'.")
 
     logger.info(f"Starting EOF download from {source}...")
+
     # The logic in eof.download.main() tries CDSE first by default. set force_asf by source
     return eof.download.main(
         sentinel_file=sentinel_file,

@@ -153,7 +153,7 @@ docker run --env-file env.secret -it sar-pipeline --scene S1A_IW_SLC__1SSH_20220
 
 
 ```bash
-docker run --env-file env.secret -v /data/working:/home/rtc_user/working -it sar-pipeline \
+docker run --env-file env.secret -it sar-pipeline \
 --scene S1A_IW_SLC__1SSH_20220101T124744_20220101T124814_041267_04E7A2_1DAD \
 --burst_id_list t070_149815_iw3 \
 --output_crs 3031 \
