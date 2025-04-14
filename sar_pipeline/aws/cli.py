@@ -157,7 +157,7 @@ def get_data_for_scene_and_make_run_config(
     # # download the orbits
     logger.info(f"Downloading Orbits for scene : {scene}")
     orbit_folder = download_folder / "orbits"
-    ORBITS_PATH = download_orbits_from_s3(scene, orbit_folder)
+    ORBITS_PATH = download_orbits_from_datahub(sentinel_file = scene + '.SAFE', save_dir = orbit_folder)
 
     # # download the dem
     dem_folder = download_folder / "dem"
