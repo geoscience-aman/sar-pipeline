@@ -187,7 +187,6 @@ class BurstH5toStacManager:
     def add_properties_from_h5(self):
         """Map required properties from the .h5 file"""
 
-        # TODO finalise stac properties based on best practice
         # add product stac extension properties
         self.item.properties["product:type"] = self.product
         self.item.properties["product:timeliness_category"] = (
@@ -510,7 +509,7 @@ class BurstH5toStacManager:
             )
 
     def add_linked_static_layer_assets_and_link(self):
-        """add the static layer assets to STAC the metadata file. This is
+        """add the static layer assets to the STAC metadata file. This is
         achieved by reading in the STAC metadata file associated with the
         static layers themselves"""
 

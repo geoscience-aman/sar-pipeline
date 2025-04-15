@@ -1,5 +1,29 @@
 # AWS Pipeline
 
+- [AWS Pipeline](#aws-pipeline)
+  - [About](#about)
+    - [Example outputs](#example-outputs)
+  - [Pipeline Overview](#pipeline-overview)
+    - [Creating Products](#creating-products)
+  - [Environment Variables](#environment-variables)
+  - [Container processing location](#container-processing-location)
+- [Build the docker image](#build-the-docker-image)
+  - [Test image interactively](#test-image-interactively)
+- [Running the workflow](#running-the-workflow)
+  - [RTC\_S1 - Sentinel-1 Radiometrically Terrain Corrected (RTC) Backscatter](#rtc_s1---sentinel-1-radiometrically-terrain-corrected-rtc-backscatter)
+    - [Antarctica (without linking RTC\_S1\_STATIC)](#antarctica-without-linking-rtc_s1_static)
+    - [Australia (without linking RTC\_S1\_STATIC)](#australia-without-linking-rtc_s1_static)
+  - [RTC\_S1\_STATIC - Static Layers for Sentinel-1 Radiometrically Terrain Corrected (RTC) Backscatter](#rtc_s1_static---static-layers-for-sentinel-1-radiometrically-terrain-corrected-rtc-backscatter)
+- [Examples](#examples)
+  - [Make static layers (RTC\_S1\_STATIC) for a burst and link it to a backscatter product (RTC\_S1)](#make-static-layers-rtc_s1_static-for-a-burst-and-link-it-to-a-backscatter-product-rtc_s1)
+    - [1. Make the static layers to link to each product:](#1-make-the-static-layers-to-link-to-each-product)
+    - [2. Make the RTC Backscatter for the scene and link the metadata to the static layers](#2-make-the-rtc-backscatter-for-the-scene-and-link-the-metadata-to-the-static-layers)
+    - [3. Ensure the files are linked in the STAC metadata](#3-ensure-the-files-are-linked-in-the-stac-metadata)
+- [Development](#development)
+  - [Development in the Container](#development-in-the-container)
+    - [Mount files at runtime](#mount-files-at-runtime)
+
+
 ## About 
 
 The AWS sar-pipeline can be used to create two products using the OPERA ISCE3 based workflows. These are:
@@ -9,11 +33,12 @@ The AWS sar-pipeline can be used to create two products using the OPERA ISCE3 ba
 **RTC_S1** products are unique to each acquisition. **RTC_S1_STATIC** products are ancillary layers that can be shared across the same burst_id.
 
 
-The **RTC_S1** pipeline must be run for every new scene acquired by Sentinel-1. The **RTC_S1_STATIC** product only needs to be run a single time to create static layers that are fixed for each burst. These layers will need to be recreated only if the acquisition scenario or DEM changes. OR if the area of interest for the DE-Australia and DE-Antarctica project changes. Examples of static layers include `local_incidence_angles` and `digital_elevation_models`. Given the highly stable orbital tube of sentinel-1, these layers can be considered STATIC for a given burst.
+The **RTC_S1** pipeline must be run for every new scene acquired by Sentinel-1. The **RTC_S1_STATIC** product only needs to be run a single time to create static layers that are fixed for each burst. These layers will need to be recreated only if the acquisition scenario or DEM changes. OR if the area of interest for the DE-Australia and DE-Antarctica project changes (this is not expected to happen often). Examples of static layers include `local_incidence_angles` and `digital_elevation_models`. Given the highly stable orbital tube of sentinel-1, these layers can be considered STATIC for a given burst.
 
-The static layers can be re-used across a given burst_id, saving the storage required if they were created with each acquisition. For example, every 12 days sentinel 1A will capture the burst `t070_149815_iw3`. The same `local_incidence_angles.tif` can be used for each repeat pass, only the dialectic properties of the surface will change over time. The static layer is therefore referenced in a given **RTC_S1** product STAC metadata.
+The static layers can be 're-used' across a given burst_id, saving the storage required if they were created with each acquisition. For example, every 12 days Sentinel-1A will capture the burst `t070_149815_iw3`. The same `local_incidence_angles.tif` can be used for each repeat pass, as only the dielectric properties of the surface will change over time, and the angle at which the satellite observes the terrain will be the same. The static layer is therefore *linked* to a given **RTC_S1** product in the STAC metadata.
 
-To link a **RTC_S1** product to the appropriate  **RTC_S1_STATIC** layers, the **RTC_S1_STATIC** layer product must exist for all bursts over the scene of interest. The linkage is then specified when the workflow is run to create **RTC_S1** products. See the example *Make static layers (RTC_S1_STATIC) for a burst and link it to a backscatter product (RTC_S1)* below.
+To link a **RTC_S1** product to the appropriate  **RTC_S1_STATIC** layers, the **RTC_S1_STATIC** products **must** exist for the given bursts. The linkage is specified when the workflow is run to create **RTC_S1** products. See the following example on how to [Make static layers (RTC_S1_STATIC) for a burst and link it to a backscatter product (RTC_S1)](#make-static-layers-rtcs1_static-for-a-burst-and-link-it-to-a-backscatter-product-rtcs1)
+
 
 After each run is completed, the files will be uploaded to a specified S3 bucket location. A unique subpath for each product is created in the workflow.
 
