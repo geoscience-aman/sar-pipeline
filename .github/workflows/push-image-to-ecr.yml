@@ -29,7 +29,7 @@ jobs:
 
     - name: Build and tag Docker image
       env:
-        ECR_REGISTRY: 538673716275.dkr.ecr.ap-southeast-2.amazonaws.com
+        ECR_REGISTRY: 538673716275.dkr.ecr.ap-southeast-2.amazonaws.com/geoscienceaustralia
         ECR_REPOSITORY: sar-pipeline
 
       run: |
