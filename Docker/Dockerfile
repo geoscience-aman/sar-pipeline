@@ -9,6 +9,7 @@ version="0.1"
 
 RUN yum -y update &&\
 yum -y install curl &&\
+yum install git -y &&\
 adduser rtc_user
 
 RUN mkdir -p /home/rtc_user/OPERA
@@ -61,7 +62,7 @@ RUN curl -o opera-burst-bbox-only.sqlite3 "$BURST_DB_URL"
 # Copy the full project and create a second CONDA environment for the sar-pipeline
 WORKDIR /home/rtc_user/sar-pipeline
 COPY --chown=rtc_user:rtc_user . /home/rtc_user/sar-pipeline
-RUN conda env create -f /home/rtc_user/sar-pipeline/environment.yml
+RUN conda env create -f /home/rtc_user/sar-pipeline/environment.yml && conda clean -afy
 
 # Copy the .sh file that will be run on entry to the container
 RUN mkdir -p /home/rtc_user/scripts
