@@ -29,10 +29,10 @@ jobs:
 
     - name: Build and tag Docker image
       env:
-        ECR_REGISTRY: 538673716275.dkr.ecr.ap-southeast-2.amazonaws.com 
+        ECR_REGISTRY: 538673716275.dkr.ecr.ap-southeast-2.amazonaws.com
         ECR_REPOSITORY: sar-pipeline
 
-      run: 
+      run: |
         IMAGE_TAG=${{ github.event.release.tag_name }}
         IMAGE_URI=${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG
 
