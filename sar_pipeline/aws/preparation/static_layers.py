@@ -64,7 +64,7 @@ def find_s3_filepaths_from_suffixes(bucket_name, s3_folder, suffixes) -> dict:
     return suffix_to_s3path
 
 
-def get_burst_ids_for_scene(
+def get_burst_ids_for_scene_from_asf(
     scene: str, burst_prefix: str = "t", lowercase=True
 ) -> list[str]:
     """Get the list of burst_ids corresponding to a scene
@@ -138,10 +138,10 @@ def make_static_layer_base_url(
 
 def check_static_layers_in_s3(
     scene: str,
+    burst_id_list,
     static_layers_s3_bucket: str,
     static_layers_collection: str,
     static_layers_s3_project_folder: str,
-    burst_id_list=[],
 ):
     """Check AWS S3 bucket to ensure static layers exist for the required bursts
 
@@ -149,14 +149,14 @@ def check_static_layers_in_s3(
     ----------
     scene : str
         the scene id. e.g. S1A_IW_SLC__1SSH_20220101T124744_20220101T124814_041267_04E7A2_1DAD
+    burst_id_list : list
+        List of specific bursts to see if static layers exist.
     static_layers_s3_bucket : str
         s3 bucket
     static_layers_collection : str
         collection folder for the static layers
     static_layers_s3_project_folder : str
         project folder for static layers
-    burst_id_list : list, optional
-        List of specific bursts to see if static layers exist. by default [] and the bursts associated with the scene will be searched for.
 
     Returns
     -------
@@ -170,10 +170,7 @@ def check_static_layers_in_s3(
     """
 
     if not burst_id_list:
-        # only scene provided, need to search and find the related bursts
-        logger.info(f"Searching ASF for burst ids associated with scene")
-        burst_id_list = get_burst_ids_for_scene(scene)
-        logger.info(f"\n{len(burst_id_list)} Bursts found")
+        raise ValueError('A list of bursts for scene must be passed in.')
 
     n_bursts = len(burst_id_list)
     raise_missing_file_error = False
@@ -214,9 +211,9 @@ def check_static_layers_in_s3(
         )
         raise FileExistsError(
             f"\nMissing static layers for bursts in scene : {scene}\n"
-            f"{n_missing} of {n_bursts} required bursts missing\n"
+            f"{n_missing} of {n_bursts} required bursts have files missing.\n"
             f"Missing Bursts and static layer filetypes:\n"
             f"{missing_info}\n"
             f"Example path searched : {static_layers_s3_folder}\n"
-            f"Check S3 linked location settings or create static layers using --product RTC_S1_STATIC. See workflow docs for details."
+            f"Check S3 linked location settings or create missing static layers using --product RTC_S1_STATIC. See workflow docs for details."
         )
