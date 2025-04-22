@@ -18,8 +18,8 @@ classifiers=[
 dynamic = ["version"]
 dependencies = [
     "asf-search>=8.1.1", 
-    "boto3>=1.37.27", 
-    "botocore>=1.37.27", 
+    "boto3>=1.37.1", 
+    "botocore>=1.37.1", 
     "h5py>=3.13.0", 
     "pystac>=1.12.2", 
     "ruamel-yaml>=0.18.10", 
@@ -76,6 +76,7 @@ s1etad_tools = ">=0.8.1"
 tomli = ">=2.2.1"
 sentineleof = ">=0.11.0"
 s1reader = ">=0.2.4"
+aioboto3 = "==14.1.0"
 
 [tool.pixi.environments]
 default = { solve-group = "default" }
