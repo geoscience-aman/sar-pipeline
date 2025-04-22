@@ -27,18 +27,19 @@ def download_slc_from_asf(
     asf_pass: str | None = None,
 ):
 
+    logger.info(f'Searching ASF for scene')
+    
     search_results = asf_search.granule_search(
         [scene], asf_search.ASFSearchOptions(processingLevel="SLC")
     )
 
-    # ansure only one slc found
-    assert (
-        len(search_results) == 1
-    ), f"Expected 1 SLC, found {len(search_results)} for scene : {scene}"
+    # ensure only one slc found
+    if len(search_results) != 1:
+        raise ValueError(f"Expected 1 SLC, found {len(search_results)} for scene : {scene}")
     asf_scene_metadata = search_results[0]
     scene_name = asf_scene_metadata.properties["sceneName"]
 
-    # Authenticate. If credentials not supplied search the envrionment variables
+    # Authenticate. If credentials not supplied search the environment variables
     if asf_login is None and asf_pass is None:
         asf_login = os.environ["EARTHDATA_LOGIN"]
         asf_pass = os.environ["EARTHDATA_PASSWORD"]
@@ -57,9 +58,9 @@ def download_slc_from_asf(
 
     logger.info(f"Downloading : {scene_name}")
     asf_scene_metadata.download(path=download_folder, session=session)
-    scene_zip_path = os.path.join(download_folder, f"{scene_name}.zip")
+    scene_zip_path = download_folder / f"{scene_name}.zip"
 
-    scene_safe_path = scene_zip_path.replace(".zip", ".SAFE")
+    scene_safe_path = scene_zip_path.with_suffix(".SAFE")
     if unzip and not os.path.exists(scene_safe_path):
         logger.info(f"unzipping scene to {scene_safe_path}")
         with zipfile.ZipFile(scene_zip_path, "r") as zip_ref:
@@ -77,7 +78,7 @@ def download_slc_from_cdse(
     cdse_login: str | None = None,
     cdse_pass: str | None = None,
 ):
- 
+    
     # Authenticate. If credentials not supplied search the envrionment variables
     if cdse_login is None and cdse_pass is None:
         cdse_login = os.environ["EARTHDATA_LOGIN"]
@@ -92,6 +93,8 @@ def download_slc_from_cdse(
     if make_folder:
         os.makedirs(download_folder, exist_ok=True)
 
+    logger.info(f'Searching CDSE for scene')
+
     features = query_features(
         "Sentinel1",
         {
@@ -102,10 +105,13 @@ def download_slc_from_cdse(
         },
     )
 
+    if len(features) != 1:
+        raise ValueError(f"Expected 1 SLC, found {len(features)} for scene : {scene}")
+
     list(
         download_features(
             features,
-            "path/to/output/folder/",
+            download_folder,
             {
                 "concurrency": 1,
                 "monitor": StatusMonitor(),
@@ -113,5 +119,15 @@ def download_slc_from_cdse(
             },
         )
     )
+
+    scene_zip_path = download_folder / f"{scene}.SAFE.zip"
+    scene_safe_path = scene_zip_path.with_suffix('')
+    if unzip and not os.path.exists(scene_safe_path):
+        logger.info(f"unzipping scene to {scene_safe_path}")
+        with zipfile.ZipFile(scene_zip_path, "r") as zip_ref:
+            zip_ref.extractall(download_folder)
+        return scene_safe_path
+    else:
+        return scene_zip_path
 
     
