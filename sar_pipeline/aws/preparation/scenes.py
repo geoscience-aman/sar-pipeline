@@ -3,6 +3,10 @@ import os
 from pathlib import Path
 import logging
 import zipfile
+from cdsetool.query import query_features
+from cdsetool.credentials import Credentials
+from cdsetool.download import download_features
+from cdsetool.monitor import StatusMonitor
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -63,3 +67,51 @@ def download_slc_from_asf(
         return scene_safe_path, asf_scene_metadata
     else:
         return scene_zip_path, asf_scene_metadata
+
+
+def download_slc_from_cdse(
+    scene: str,
+    download_folder: Path,
+    make_folder: bool = True,
+    unzip: bool = True,
+    cdse_login: str | None = None,
+    cdse_pass: str | None = None,
+):
+ 
+    # Authenticate. If credentials not supplied search the envrionment variables
+    if cdse_login is None and cdse_pass is None:
+        cdse_login = os.environ["EARTHDATA_LOGIN"]
+        cdse_pass = os.environ["EARTHDATA_PASSWORD"]
+        if not cdse_login or cdse_pass:
+            err_string = (
+                "No credentials supplied. Please provide a cdse_login and cdse_pass "
+                "or set the CDSE_LOGIN and CDSE_PASSWORD environment variables"
+            )
+            MissingCredentialsError(err_string)
+
+    if make_folder:
+        os.makedirs(download_folder, exist_ok=True)
+
+    features = query_features(
+        "Sentinel1",
+        {
+            "processingLevel": "LEVEL1",
+            "sensorMode": "IW",
+            "productType": "IW_SLC__1S",
+            "productIdentifier": scene
+        },
+    )
+
+    list(
+        download_features(
+            features,
+            "path/to/output/folder/",
+            {
+                "concurrency": 1,
+                "monitor": StatusMonitor(),
+                "credentials": Credentials(cdse_login, cdse_pass),
+            },
+        )
+    )
+
+    
