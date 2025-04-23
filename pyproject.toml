@@ -86,6 +86,7 @@ dev = { features = ["dev"], solve-group = "default" }
 test-all = "pytest"
 test-pipeline = "pytest tests/sar_pipeline/"
 test-nci-filesystem = "pytest tests/filesystem"
+lint = "black sar_pipeline"
 
 [tool.pixi.feature.dev.dependencies]
 pre-commit = ">=4.2.0"
@@ -97,3 +98,6 @@ export-conda = """
 pixi workspace export conda-environment environment.yml && \
 sed -ix "s/^name: default$/name: sar-pipeline/" environment.yml; rm environment.ymlx
 """
+
+[dependency-groups]
+dev = ["black>=25.1.0"]
