@@ -150,18 +150,26 @@ def get_data_for_scene_and_make_run_config(
 
     # check the static layers exist
     if link_static_layers:
-        
+
         if not burst_id_list:
             # list of bursts not provided, get them from the downloaded file
             burst_id_list = []
-            logger.info(f'Getting all burst ids from the scene zip file')
-            pol_type = scene.split('_')[4][2:] # get the pol-type from the scene name
-            pol_map = {"SH": ["HH"], "SV": ["VV"], "DH": ["HH", "HV"], "DV": ["VV", "VH"]}
-            logger.info(f'Scene polarisations : {pol_map[pol_type]}')
+            logger.info(f"Getting all burst ids from the scene zip file")
+            pol_type = scene.split("_")[4][2:]  # get the pol-type from the scene name
+            pol_map = {
+                "SH": ["HH"],
+                "SV": ["VV"],
+                "DH": ["HH", "HV"],
+                "DV": ["VV", "VH"],
+            }
+            logger.info(f"Scene polarisations : {pol_map[pol_type]}")
             for pol in pol_map[pol_type]:
-                burst_id_list += [str(b.burst_id) for b in s1_info.get_bursts(SCENE_PATH,pol=pol.lower())]
-            burst_id_list = list(set(burst_id_list)) # remove duplicates
-            logger.info(f'{len(burst_id_list)} bursts found for scene')
+                burst_id_list += [
+                    str(b.burst_id)
+                    for b in s1_info.get_bursts(SCENE_PATH, pol=pol.lower())
+                ]
+            burst_id_list = list(set(burst_id_list))  # remove duplicates
+            logger.info(f"{len(burst_id_list)} bursts found for scene")
 
         logger.info(f"Checking static layers exist for bursts in scene : {scene}")
         check_static_layers_in_s3(
