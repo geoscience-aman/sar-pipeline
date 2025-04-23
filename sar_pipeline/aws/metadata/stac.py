@@ -10,6 +10,7 @@ import datetime
 import re
 import numpy as np
 
+import dem_handler
 import sar_pipeline
 from sar_pipeline.aws.metadata.h5 import H5Manager
 from sar_pipeline.utils.spatial import polygon_str_to_geojson, convert_bbox
@@ -259,7 +260,7 @@ class BurstH5toStacManager:
             "s1Reader": self.h5.search_value("algorithms/s1ReaderVersion"),
             "OPERA-adt/RTC": self.h5.search_value("algorithms/softwareVersion"),
             "sar-pipeline": sar_pipeline.__version__,
-            "dem-handler": "",  # TODO get from __version__
+            "dem-handler": dem_handler.__version__,
         }
 
         # proposed nrb stac extension properties

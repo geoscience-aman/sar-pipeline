@@ -25,10 +25,10 @@ Run `micromamba env list` to check if micromamba has been set up correctly. You 
   base            *       /<install-path>/micromamba             
 ```
 
-### Install the required packages using environment.yml
+### Install the required packages using environment.yaml
 Change directories to the cloned repository directory, then run
 ```bash
-micromamba create -f environment.yml 
+micromamba create -f environment.yaml 
 ```
 
 Activate the environment using

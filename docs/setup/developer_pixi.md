@@ -130,15 +130,15 @@ The test suite consists of the following tasks:
 * nci filesystem tests: `pixi run test-nci-filesystem`
 * pipeline tests: `pixi run test-pipeline`
 
-There is also a task to export the `default` pixi environment as a conda environment.yml file: `pixi run export-conda`
+There is also a task to export the `default` pixi environment as a conda environment.yaml file: `pixi run export-conda`
 
 ## Pre-commit hooks
 Sometimes, it's easy to miss updating the lock file, especially if you directly edit the `pyproject.toml` file. 
-And, it's easy to forget to export a new version of the conda `environment.yml` file.
+And, it's easy to forget to export a new version of the conda `environment.yaml` file.
 We have added the `pre-commit` package to manage these steps.
 
 When you make a git commit, the following checks will be run:
 * Is the `pixi.lock` file up to date with the `pyproject.toml` file?
-* Is the `environment.yml` file up to date with the `pyproject.toml` file?
+* Is the `environment.yaml` file up to date with the `pyproject.toml` file?
 
 If either of these checks fail, the pre-commit hook will automatically update the files for you, and provide a message that you must add the changed files and re-run the commit step. 
