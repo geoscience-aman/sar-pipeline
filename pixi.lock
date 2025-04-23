@@ -250,7 +250,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/zstd-1.5.7-hb8e6e7a_2.conda
       - pypi: https://files.pythonhosted.org/packages/35/13/a4e305f1f5550216189c9772c2680a6dadec1934fb634b9e6d4bbf20a921/asf_search-8.1.2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/a4/29/db12aa4dda81580be1999824a689bd52aa40061fc12c9ccdc3feab5ea718/dateparser-1.2.0-py2.py3-none-any.whl
-      - pypi: git+https://github.com/GeoscienceAustralia/dem-handler.git#6889d327983dba979aa7af3db66654edf1cf6d33
+      - pypi: git+https://github.com/GeoscienceAustralia/dem-handler.git#25a4af016733803d7f7b1d6076592bb030321031
       - pypi: https://files.pythonhosted.org/packages/0f/7c/1b361a24d3087cd922ec1f6dfe02f230507d800ada3f922532f1f906a09e/pystac-1.13.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/fb/13/e3b075031a738c9598c51cfbc4c7879e26729c53aa9cca59211c44235314/regex-2024.11.6-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/f2/ea/5db30ed6ae5c5d681b38bc459aba542d9633cb2cfea27c48753e83f236ff/s1_orbits-0.1.3-py3-none-any.whl
@@ -488,7 +488,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/zstd-1.5.7-h6491c7d_2.conda
       - pypi: https://files.pythonhosted.org/packages/35/13/a4e305f1f5550216189c9772c2680a6dadec1934fb634b9e6d4bbf20a921/asf_search-8.1.2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/a4/29/db12aa4dda81580be1999824a689bd52aa40061fc12c9ccdc3feab5ea718/dateparser-1.2.0-py2.py3-none-any.whl
-      - pypi: git+https://github.com/GeoscienceAustralia/dem-handler.git#6889d327983dba979aa7af3db66654edf1cf6d33
+      - pypi: git+https://github.com/GeoscienceAustralia/dem-handler.git#25a4af016733803d7f7b1d6076592bb030321031
       - pypi: https://files.pythonhosted.org/packages/0f/7c/1b361a24d3087cd922ec1f6dfe02f230507d800ada3f922532f1f906a09e/pystac-1.13.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/60/85/cebcc0aff603ea0a201667b203f13ba75d9fc8668fab917ac5b2de3967bc/regex-2024.11.6-cp312-cp312-macosx_11_0_arm64.whl
       - pypi: https://files.pythonhosted.org/packages/f2/ea/5db30ed6ae5c5d681b38bc459aba542d9633cb2cfea27c48753e83f236ff/s1_orbits-0.1.3-py3-none-any.whl
@@ -760,7 +760,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/zstd-1.5.7-hb8e6e7a_2.conda
       - pypi: https://files.pythonhosted.org/packages/35/13/a4e305f1f5550216189c9772c2680a6dadec1934fb634b9e6d4bbf20a921/asf_search-8.1.2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/a4/29/db12aa4dda81580be1999824a689bd52aa40061fc12c9ccdc3feab5ea718/dateparser-1.2.0-py2.py3-none-any.whl
-      - pypi: git+https://github.com/GeoscienceAustralia/dem-handler.git#6889d327983dba979aa7af3db66654edf1cf6d33
+      - pypi: git+https://github.com/GeoscienceAustralia/dem-handler.git#25a4af016733803d7f7b1d6076592bb030321031
       - pypi: https://files.pythonhosted.org/packages/0f/7c/1b361a24d3087cd922ec1f6dfe02f230507d800ada3f922532f1f906a09e/pystac-1.13.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/fb/13/e3b075031a738c9598c51cfbc4c7879e26729c53aa9cca59211c44235314/regex-2024.11.6-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/f2/ea/5db30ed6ae5c5d681b38bc459aba542d9633cb2cfea27c48753e83f236ff/s1_orbits-0.1.3-py3-none-any.whl
@@ -1013,7 +1013,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/zstd-1.5.7-h6491c7d_2.conda
       - pypi: https://files.pythonhosted.org/packages/35/13/a4e305f1f5550216189c9772c2680a6dadec1934fb634b9e6d4bbf20a921/asf_search-8.1.2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/a4/29/db12aa4dda81580be1999824a689bd52aa40061fc12c9ccdc3feab5ea718/dateparser-1.2.0-py2.py3-none-any.whl
-      - pypi: git+https://github.com/GeoscienceAustralia/dem-handler.git#6889d327983dba979aa7af3db66654edf1cf6d33
+      - pypi: git+https://github.com/GeoscienceAustralia/dem-handler.git#25a4af016733803d7f7b1d6076592bb030321031
       - pypi: https://files.pythonhosted.org/packages/0f/7c/1b361a24d3087cd922ec1f6dfe02f230507d800ada3f922532f1f906a09e/pystac-1.13.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/60/85/cebcc0aff603ea0a201667b203f13ba75d9fc8668fab917ac5b2de3967bc/regex-2024.11.6-cp312-cp312-macosx_11_0_arm64.whl
       - pypi: https://files.pythonhosted.org/packages/f2/ea/5db30ed6ae5c5d681b38bc459aba542d9633cb2cfea27c48753e83f236ff/s1_orbits-0.1.3-py3-none-any.whl
@@ -1868,9 +1868,9 @@ packages:
   - fasttext ; extra == 'fasttext'
   - langdetect ; extra == 'langdetect'
   requires_python: '>=3.7'
-- pypi: git+https://github.com/GeoscienceAustralia/dem-handler.git#6889d327983dba979aa7af3db66654edf1cf6d33
+- pypi: git+https://github.com/GeoscienceAustralia/dem-handler.git#25a4af016733803d7f7b1d6076592bb030321031
   name: dem-handler
-  version: '0.1'
+  version: 0.1.dev89+g25a4af0
   requires_dist:
   - boto3>=1.37.1
   - geopandas>=1.0.1
@@ -5470,8 +5470,8 @@ packages:
   timestamp: 1740681675666
 - pypi: .
   name: sar-pipeline
-  version: 0.2.dev288+gf66a061.d20250422
-  sha256: 85cc13bb2a8322b33b1ef9ee10eea90f3d925cd7560275b7936c71b8447e1dc7
+  version: 0.13.dev9+ge53d436.d20250423
+  sha256: f91894bad80e51a30f540335407ea70dca9923e970a6193d9c85ff196839d970
   requires_dist:
   - asf-search>=8.1.1
   - boto3>=1.37.1
