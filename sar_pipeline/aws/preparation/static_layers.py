@@ -170,7 +170,7 @@ def check_static_layers_in_s3(
     """
 
     if not burst_id_list:
-        raise ValueError('A list of bursts for scene must be passed in.')
+        raise ValueError("A list of bursts for scene must be passed in.")
 
     n_bursts = len(burst_id_list)
     raise_missing_file_error = False

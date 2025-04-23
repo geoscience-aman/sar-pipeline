@@ -18,13 +18,14 @@ classifiers=[
 dynamic = ["version"]
 dependencies = [
     "asf-search>=8.1.1", 
-    "boto3>=1.37.27", 
-    "botocore>=1.37.27", 
+    "boto3>=1.37.1", 
+    "botocore>=1.37.1", 
     "h5py>=3.13.0", 
     "pystac>=1.12.2", 
     "ruamel-yaml>=0.18.10", 
     "s1-orbits>=0.1.3", 
-    "cdsetool>=0.2.13" 
+    "cdsetool>=0.2.13", 
+    "dem-handler @ git+https://github.com/GeoscienceAustralia/dem-handler.git", 
 ]
 
 [project.urls]
@@ -55,7 +56,7 @@ sar_pipeline = ["**/*.yaml", "**/*.yml", "**/*.gpkg", "**/*.json"]
 
 [tool.pixi.project]
 channels = ["conda-forge", "avalentino", "s1-etad"]
-platforms = ["linux-64"]
+platforms = ["linux-64", "osx-arm64"]
 
 [tool.pixi.pypi-dependencies]
 sar-pipeline = { path = ".", editable = true }
@@ -76,6 +77,7 @@ s1etad_tools = ">=0.8.1"
 tomli = ">=2.2.1"
 sentineleof = ">=0.11.0"
 s1reader = ">=0.2.4"
+aioboto3 = "==14.1.0"
 
 [tool.pixi.environments]
 default = { solve-group = "default" }
@@ -85,6 +87,7 @@ dev = { features = ["dev"], solve-group = "default" }
 test-all = "pytest"
 test-pipeline = "pytest tests/sar_pipeline/"
 test-nci-filesystem = "pytest tests/filesystem"
+lint = "black sar_pipeline"
 
 [tool.pixi.feature.dev.dependencies]
 pre-commit = ">=4.2.0"
@@ -93,6 +96,9 @@ coverage = ">=7.8.0"
 
 [tool.pixi.tasks]
 export-conda = """
-pixi workspace export conda-environment environment.yml && \
-sed -i 's/^name: default$/name: sar-pipeline/' environment.yml
+pixi workspace export conda-environment environment.yaml && \
+sed -ix "s/^name: default$/name: sar-pipeline/" environment.yaml; rm environment.yamlx
 """
+
+[dependency-groups]
+dev = ["black>=25.1.0"]

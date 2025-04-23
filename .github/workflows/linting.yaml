@@ -1,0 +1,15 @@
+name: Linting
+
+on:
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    name: Run black linting
+    steps:
+    - uses: actions/checkout@v4
+    - name: Lint
+      uses: psf/black@stable
+      with:
+        options: "--check --verbose"
