@@ -97,3 +97,6 @@ export-conda = """
 pixi workspace export conda-environment environment.yml && \
 sed -ix "s/^name: default$/name: sar-pipeline/" environment.yml; rm environment.ymlx
 """
+
+[dependency-groups]
+dev = ["black>=25.1.0"]
