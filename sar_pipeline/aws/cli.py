@@ -44,7 +44,7 @@ logger = logging.getLogger(__name__)
     "--output-crs",
     required=False,
     default="",
-    help="The output CRS as in integer. e.g. 3031. If [None,'UTM','utm'] the default UTM zone for scene/burst center is used (polar stereo at lat>75).",
+    help="The output CRS as an integer. e.g. 3031. If [None,'UTM','utm'] the default UTM zone for scene/burst center is used (polar stereo at lat>75).",
 )
 @click.option("--dem", required=True, type=click.Choice(["cop_glo30"]))
 @click.option(
