@@ -270,7 +270,7 @@ def get_data_for_scene_and_make_run_config(
     RTC_RUN_CONFIG.set(f"{bk}.y_snap", int(resolution))
 
     # update the burst crs if it has been set and is not UTM | utm
-    if output_crs and (output_crs not in [None, "utm", "UTM", ""]):
+    if output_crs and (output_crs not in ["utm", "UTM"]):
         RTC_RUN_CONFIG.set(f"{bk}.output_epsg", int(output_crs))
 
     # save the config
