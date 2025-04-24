@@ -5,7 +5,7 @@
 scene=""
 burst_ids=()
 resolution=20
-output_crs=""
+output_crs="UTM"
 dem="cop_glo30"
 product="RTC_S1"
 s3_bucket="deant-data-public-dev"
@@ -70,16 +70,13 @@ fi
 # If empty, the CRS corresponding to the center of the scene is used
 # OR, the CRS from the burst_db is used if provided.
 
-if [[ -z "$output_crs" ]]; then
+if [[ -z "$output_crs" || "${output_crs,,}" == "utm" ]]; then
     epsg_code_msg="default UTM for scene center"
+elif [[ "$output_crs" =~ ^[0-9]+$ ]]; then
+    epsg_code_msg="EPSG:$output_crs"
 else
-    # Check if the parameter is an integer using regex
-    if ! [[ "$output_crs" =~ ^[0-9]+$ ]]; then
-        echo "Error: --output_crs must be an integer corresponding to a CRS code (e.g. 3031) or empty."
-        exit 1
-    else
-        epsg_code_msg="EPSG:$output_crs"
-    fi
+    echo "Error: --output_crs must be empty, 'UTM', 'utm', or an integer corresponding to a CRS code (e.g. 3031)."
+    exit 1
 fi
 
 # Ensure the specified product is valid

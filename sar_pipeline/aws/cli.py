@@ -44,7 +44,7 @@ logger = logging.getLogger(__name__)
     "--output-crs",
     required=False,
     default="",
-    help="The output CRS as in integer. e.g. 3031. If None the default UTM zone for scene/burst center is used",
+    help="The output CRS as in integer. e.g. 3031. If [None,'UTM','utm'] the default UTM zone for scene/burst center is used (polar stereo at lat>75).",
 )
 @click.option("--dem", required=True, type=click.Choice(["cop_glo30"]))
 @click.option(
@@ -269,8 +269,8 @@ def get_data_for_scene_and_make_run_config(
     RTC_RUN_CONFIG.set(f"{bk}.x_snap", int(resolution))
     RTC_RUN_CONFIG.set(f"{bk}.y_snap", int(resolution))
 
-    # update the burst crs if it has been set
-    if output_crs and output_crs is not None:
+    # update the burst crs if it has been set and is not UTM | utm
+    if output_crs and (output_crs not in [None, "utm", "UTM", ""]):
         RTC_RUN_CONFIG.set(f"{bk}.output_epsg", int(output_crs))
 
     # save the config
