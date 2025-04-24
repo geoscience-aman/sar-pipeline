@@ -27,15 +27,17 @@ def download_slc_from_asf(
     asf_pass: str | None = None,
 ):
 
-    logger.info(f'Searching ASF for scene')
-    
+    logger.info(f"Searching ASF for scene")
+
     search_results = asf_search.granule_search(
         [scene], asf_search.ASFSearchOptions(processingLevel="SLC")
     )
 
     # ensure only one slc found
     if len(search_results) != 1:
-        raise ValueError(f"Expected 1 SLC, found {len(search_results)} for scene : {scene}")
+        raise ValueError(
+            f"Expected 1 SLC, found {len(search_results)} for scene : {scene}"
+        )
     asf_scene_metadata = search_results[0]
     scene_name = asf_scene_metadata.properties["sceneName"]
 
@@ -78,7 +80,7 @@ def download_slc_from_cdse(
     cdse_login: str | None = None,
     cdse_pass: str | None = None,
 ):
-    
+
     # Authenticate. If credentials not supplied search the envrionment variables
     if cdse_login is None and cdse_pass is None:
         cdse_login = os.environ["EARTHDATA_LOGIN"]
@@ -93,7 +95,7 @@ def download_slc_from_cdse(
     if make_folder:
         os.makedirs(download_folder, exist_ok=True)
 
-    logger.info(f'Searching CDSE for scene')
+    logger.info(f"Searching CDSE for scene")
 
     features = query_features(
         "Sentinel1",
@@ -101,7 +103,7 @@ def download_slc_from_cdse(
             "processingLevel": "LEVEL1",
             "sensorMode": "IW",
             "productType": "IW_SLC__1S",
-            "productIdentifier": scene
+            "productIdentifier": scene,
         },
     )
 
@@ -121,13 +123,11 @@ def download_slc_from_cdse(
     )
 
     scene_zip_path = download_folder / f"{scene}.SAFE.zip"
-    scene_safe_path = scene_zip_path.with_suffix('')
+    scene_safe_path = scene_zip_path.with_suffix("")
     if unzip and not os.path.exists(scene_safe_path):
         logger.info(f"unzipping scene to {scene_safe_path}")
         with zipfile.ZipFile(scene_zip_path, "r") as zip_ref:
             zip_ref.extractall(download_folder)
-        return scene_safe_path
+        return scene_safe_path, features[0]
     else:
-        return scene_zip_path
-
-    
+        return scene_zip_path, features[0]

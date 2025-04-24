@@ -39,7 +39,7 @@ def download_orbits_from_s3(
     return orbit_file
 
 
-def download_orbits_from_datahub(
+def download_orbits(
     sentinel_file: Path,
     save_dir: Path,
     source: Literal["CDSE", "ASF"] = "CDSE",
