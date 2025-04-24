@@ -75,7 +75,7 @@ if [[ -z "$output_crs" || "${output_crs,,}" == "utm" ]]; then
 elif [[ "$output_crs" =~ ^[0-9]+$ ]]; then
     epsg_code_msg="EPSG:$output_crs"
 else
-    echo "Error: --output_crs must be empty, 'UTM', 'utm', or an integer corresponding to a CRS code (e.g. 3031)."
+    echo "Error: --output_crs must be empty, 'UTM', 'utm', or an integer corresponding to an EPSG code (e.g. 3031)."
     exit 1
 fi
 
