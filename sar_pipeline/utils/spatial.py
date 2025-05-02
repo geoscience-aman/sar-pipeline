@@ -1,4 +1,7 @@
 from pyproj import Transformer
+from shapely import wkt
+from shapely.geometry import mapping
+import logging
 
 
 def polygon_str_to_geojson(polygon_str: str) -> dict:
@@ -14,13 +17,15 @@ def polygon_str_to_geojson(polygon_str: str) -> dict:
     dict
         Geojson for the polygon
     """
-    polygon_str = polygon_str.replace("POLYGON ((", "").replace("))", "")
-    coordinates = [list(map(float, coord.split())) for coord in polygon_str.split(", ")]
-    geojson = {
+    logging.info(polygon_str)
+    # Load and convert
+    geometry = wkt.loads(polygon_str)
+    geojson_feature = {
         "type": "Feature",
-        "geometry": {"type": "Polygon", "coordinates": [coordinates]},
+        "geometry": mapping(geometry),
+        "properties": {},
     }
-    return geojson
+    return geojson_feature
 
 
 def convert_bbox(bbox, src_crs, trg_crs):
