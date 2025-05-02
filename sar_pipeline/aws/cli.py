@@ -14,11 +14,13 @@ from sar_pipeline.aws.preparation.static_layers import (
     check_static_layers_in_s3,
     make_static_layer_base_url,
 )
+
 from sar_pipeline.aws.preparation.config import RTCConfigManager
 from sar_pipeline.aws.metadata.stac import BurstH5toStacManager
 
 from dem_handler.dem.cop_glo30 import get_cop30_dem_for_bounds
 from sar_pipeline.utils.s3upload import push_files_in_folder_to_s3
+
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -174,18 +176,11 @@ def get_data_for_scene_and_make_run_config(
         input_scene_url = asf_scene_metadata.properties["url"]
     if scene_data_source == "CDSE":
         SCENE_PATH, cdse_scene_metadata = download_slc_from_cdse(scene, scene_folder)
-        scene_polygon = Polygon(cdse_scene_metadata.geometry["coordinates"][0])
-        polarisation_list = cdse_scene_metadata["polarisation"].split("&")
-        input_scene_url = cdse_scene_metadata["services"]["download"]["url"]
-
-    # get important parameters from metadata
-    pol_type = scene.split("_")[4][2:]  # get the pol-type from the scene name
-    pol_map = {
-        "SH": ["HH"],
-        "SV": ["VV"],
-        "DH": ["HH", "HV"],
-        "DV": ["VV", "VH"],
-    }
+        scene_polygon = Polygon(cdse_scene_metadata["geometry"]["coordinates"][0])
+        polarisation_list = cdse_scene_metadata["properties"]["polarisation"].split("&")
+        input_scene_url = cdse_scene_metadata["properties"]["services"]["download"][
+            "url"
+        ]
 
     # check the static layers exist
     if link_static_layers:
@@ -194,7 +189,7 @@ def get_data_for_scene_and_make_run_config(
             # list of bursts not provided, get them from the downloaded file
             burst_id_list = []
             logger.info(f"Getting all burst ids from the scene zip file")
-            logger.info(f"Scene polarisations : {pol_map[pol_type]}")
+            logger.info(f"Scene polarisations : {polarisation_list}")
             for pol in polarisation_list:
                 burst_id_list += [
                     str(b.burst_id)
@@ -288,7 +283,7 @@ def get_data_for_scene_and_make_run_config(
 
     # set the polarisation
     POLARIZATION_TYPE = (
-        "dual-pol" if len(pol_map[pol_type]) > 1 else "co-pol"
+        "dual-pol" if len(polarisation_list) > 1 else "co-pol"
     )  # string for template value
     RTC_RUN_CONFIG.set(f"{gk}.processing.polarization", POLARIZATION_TYPE)
 

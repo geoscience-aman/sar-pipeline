@@ -60,10 +60,10 @@ def download_slc_from_asf(
 
     logger.info(f"Downloading : {scene_name}")
     asf_scene_metadata.download(path=download_folder, session=session)
-    scene_zip_path = download_folder / f"{scene_name}.zip"
+    scene_zip_path = Path(download_folder) / f"{scene_name}.zip"
 
     scene_safe_path = scene_zip_path.with_suffix(".SAFE")
-    if unzip and not os.path.exists(scene_safe_path):
+    if unzip and not scene_safe_path.exists():
         logger.info(f"unzipping scene to {scene_safe_path}")
         with zipfile.ZipFile(scene_zip_path, "r") as zip_ref:
             zip_ref.extractall(download_folder)
@@ -83,8 +83,8 @@ def download_slc_from_cdse(
 
     # Authenticate. If credentials not supplied search the envrionment variables
     if cdse_login is None and cdse_pass is None:
-        cdse_login = os.environ["EARTHDATA_LOGIN"]
-        cdse_pass = os.environ["EARTHDATA_PASSWORD"]
+        cdse_login = os.environ["CDSE_LOGIN"]
+        cdse_pass = os.environ["CDSE_PASSWORD"]
         if not cdse_login or cdse_pass:
             err_string = (
                 "No credentials supplied. Please provide a cdse_login and cdse_pass "
@@ -110,20 +110,26 @@ def download_slc_from_cdse(
     if len(features) != 1:
         raise ValueError(f"Expected 1 SLC, found {len(features)} for scene : {scene}")
 
-    list(
-        download_features(
-            features,
-            download_folder,
-            {
-                "concurrency": 1,
-                "monitor": StatusMonitor(),
-                "credentials": Credentials(cdse_login, cdse_pass),
-            },
-        )
-    )
-
-    scene_zip_path = download_folder / f"{scene}.SAFE.zip"
+    scene_zip_path = Path(download_folder) / f"{scene}.SAFE.zip"
     scene_safe_path = scene_zip_path.with_suffix("")
+
+    # download zip if safe file doesn't exist or zip doesn't exist
+    if (not scene_safe_path.exists() and unzip) or not scene_zip_path.exists():
+        logger.info(f"Downloading : {scene}.SAFE.zip")
+        list(
+            download_features(
+                features,
+                download_folder,
+                {
+                    "concurrency": 1,
+                    "monitor": StatusMonitor(),
+                    "credentials": Credentials(cdse_login, cdse_pass),
+                },
+            )
+        )
+    else:
+        logger.info(f"Skipping download, scene exists at : {scene_zip_path}")
+
     if unzip and not os.path.exists(scene_safe_path):
         logger.info(f"unzipping scene to {scene_safe_path}")
         with zipfile.ZipFile(scene_zip_path, "r") as zip_ref:
