@@ -37,7 +37,7 @@ logger = logging.getLogger(__name__)
 @click.option(
     "--burst_id_list",
     required=False,
-    multiple=True,
+    type=str,
     help="List of burst IDs separated by space. e.g. t070_149815_iw2 t070_149815_iw3",
 )
 @click.option(
@@ -149,9 +149,14 @@ def get_data_for_scene_and_make_run_config(
     """Download the required data for the RTC/opera and create a configuration
     file for the run that points to appropriate files and has the required settings
     """
+
     logger.info(f"Downloading data for scene : {scene}")
     logger.info(f"Data source for scene download : {scene_data_source}")
     logger.info(f"Data source for orbit download : {orbit_data_source}")
+
+    # split the burst_id list
+    if burst_id_list:
+        burst_id_list = burst_id_list.split(" ")
 
     # make the base .yaml for RTC processing
     if product == "RTC_S1":
@@ -186,7 +191,6 @@ def get_data_for_scene_and_make_run_config(
 
     # check the static layers exist
     if link_static_layers:
-
         if not burst_id_list:
             # list of bursts not provided, get them from the downloaded file
             burst_id_list = []
@@ -233,7 +237,7 @@ def get_data_for_scene_and_make_run_config(
         ellipsoid_heights=True,
         adjust_at_high_lat=True,
         buffer_pixels=None,
-        buffer_degrees=0.3,
+        buffer_degrees=3,
         cop30_folder_path=dem_folder,
         geoid_tif_path=dem_folder / f"{scene}_geoid.tif",
         download_dem_tiles=True,
