@@ -8,7 +8,10 @@ from typing import Literal, Optional
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+from sar_pipeline.utils.general import log_timing
 
+
+@log_timing
 def download_orbits_from_s3(
     scene: str, download_folder: Path, make_folder=True
 ) -> Path:
@@ -39,6 +42,7 @@ def download_orbits_from_s3(
     return orbit_file
 
 
+@log_timing
 def download_orbits(
     sentinel_file: Path,
     save_dir: Path,

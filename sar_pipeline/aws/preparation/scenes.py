@@ -8,6 +8,8 @@ from cdsetool.credentials import Credentials
 from cdsetool.download import download_features
 from cdsetool.monitor import StatusMonitor
 
+from sar_pipeline.utils.general import log_timing
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -18,6 +20,7 @@ class MissingCredentialsError(Exception):
     pass
 
 
+@log_timing
 def download_slc_from_asf(
     scene: str,
     download_folder: Path,
@@ -59,19 +62,28 @@ def download_slc_from_asf(
         os.makedirs(download_folder, exist_ok=True)
 
     logger.info(f"Downloading : {scene_name}")
-    asf_scene_metadata.download(path=download_folder, session=session)
     scene_zip_path = Path(download_folder) / f"{scene_name}.zip"
-
     scene_safe_path = scene_zip_path.with_suffix(".SAFE")
+
+    if scene_safe_path.exists() and unzip:
+        logger.info(f"Skipping download, unzipped scene exists at : {scene_safe_path}")
+    elif scene_zip_path.exists():
+        logger.info(f"Skipping download, zipped scene exists at : {scene_zip_path}")
+    else:
+        asf_scene_metadata.download(path=download_folder, session=session)
+
     if unzip and not scene_safe_path.exists():
         logger.info(f"unzipping scene to {scene_safe_path}")
         with zipfile.ZipFile(scene_zip_path, "r") as zip_ref:
             zip_ref.extractall(download_folder)
         return scene_safe_path, asf_scene_metadata
+    elif scene_safe_path.exists() and unzip:
+        return scene_safe_path, asf_scene_metadata
     else:
         return scene_zip_path, asf_scene_metadata
 
 
+@log_timing
 def download_slc_from_cdse(
     scene: str,
     download_folder: Path,
@@ -114,8 +126,12 @@ def download_slc_from_cdse(
     scene_safe_path = scene_zip_path.with_suffix("")
 
     # download zip if safe file doesn't exist or zip doesn't exist
-    if (not scene_safe_path.exists() and unzip) or not scene_zip_path.exists():
-        logger.info(f"Downloading : {scene}.SAFE.zip")
+    if scene_safe_path.exists() and unzip:
+        logger.info(f"Skipping download, unzipped scene exists at : {scene_safe_path}")
+    elif scene_zip_path.exists():
+        logger.info(f"Skipping download, zipped scene exists at : {scene_zip_path}")
+    else:
+        logger.info(f"Downloading : {scene}.zip")
         list(
             download_features(
                 features,
@@ -127,13 +143,13 @@ def download_slc_from_cdse(
                 },
             )
         )
-    else:
-        logger.info(f"Skipping download, scene exists at : {scene_zip_path}")
 
     if unzip and not os.path.exists(scene_safe_path):
         logger.info(f"unzipping scene to {scene_safe_path}")
         with zipfile.ZipFile(scene_zip_path, "r") as zip_ref:
             zip_ref.extractall(download_folder)
+        return scene_safe_path, features[0]
+    elif scene_safe_path.exists() and unzip:
         return scene_safe_path, features[0]
     else:
         return scene_zip_path, features[0]

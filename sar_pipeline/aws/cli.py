@@ -17,9 +17,10 @@ from sar_pipeline.aws.preparation.static_layers import (
 
 from sar_pipeline.aws.preparation.config import RTCConfigManager
 from sar_pipeline.aws.metadata.stac import BurstH5toStacManager
+from sar_pipeline.utils.s3upload import push_files_in_folder_to_s3
+from sar_pipeline.utils.general import log_timing
 
 from dem_handler.dem.cop_glo30 import get_cop30_dem_for_bounds
-from sar_pipeline.utils.s3upload import push_files_in_folder_to_s3
 
 
 logging.basicConfig(level=logging.INFO)
@@ -125,6 +126,7 @@ logger = logging.getLogger(__name__)
     help="Where to download the scene from.",
 )
 @click.option("--make-folders", required=False, default=True, help="Create folders")
+@log_timing
 def get_data_for_scene_and_make_run_config(
     scene,
     burst_id_list,
@@ -347,6 +349,7 @@ def get_data_for_scene_and_make_run_config(
     "STAC metadata. If set, the url to the static layer collection will "
     "be read in from the .h5 output from the rtc_s1.py process.",
 )
+@log_timing
 def make_rtc_opera_stac_and_upload_bursts(
     results_folder,
     run_config_path,
