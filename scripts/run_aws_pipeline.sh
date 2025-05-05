@@ -170,7 +170,7 @@ fi
 
 # Conditionally add --burst_id_list only if burst_ids is non-empty
 if [[ ${#burst_ids[@]} -gt 0 ]]; then
-    cmd+=(--burst_id_list "${burst_ids[@]}")
+    cmd+=(--burst_id_list "${burst_ids[*]}")
 fi
 
 # Execute the command
