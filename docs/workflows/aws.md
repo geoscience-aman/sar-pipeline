@@ -83,7 +83,7 @@ The AWS pipeline runs using a docker container. At runtime, the script [run_aws_
 - `s3_bucket` -> the bucket to upload the products
 - `s3_project_folder` -> The project folder to upload to.
 - `collection` -> The collection which the set of products belongs.
-- `scene_data_source` -> Where to download the scene slc file. Either `ASF` or `CDSE` by default
+- `scene_data_source` -> Where to download the scene slc file. Either `ASF` or `CDSE`. The default is `CDSE`.
 - `orbit_data_source` -> Where to download the orbit files. Either `ASF` or `CDSE` by default
 - `link_static_layers` -> Flag to link RTC_S1_STATIC to RTC_S1
 - `linked_static_layers_s3_bucket` -> bucket where RTC_S1_STATIC stored
