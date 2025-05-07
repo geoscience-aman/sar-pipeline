@@ -5,17 +5,23 @@ import shutil
 from shapely.geometry import Polygon
 from s1reader import s1_info
 
-from sar_pipeline.aws.preparation.scenes import download_slc_from_asf
-from sar_pipeline.aws.preparation.orbits import download_orbits_from_datahub
+from sar_pipeline.aws.preparation.scenes import (
+    download_slc_from_asf,
+    download_slc_from_cdse,
+)
+from sar_pipeline.aws.preparation.orbits import download_orbits
 from sar_pipeline.aws.preparation.static_layers import (
     check_static_layers_in_s3,
     make_static_layer_base_url,
 )
+
 from sar_pipeline.aws.preparation.config import RTCConfigManager
 from sar_pipeline.aws.metadata.stac import BurstH5toStacManager
+from sar_pipeline.utils.s3upload import push_files_in_folder_to_s3
+from sar_pipeline.utils.general import log_timing
 
 from dem_handler.dem.cop_glo30 import get_cop30_dem_for_bounds
-from sar_pipeline.utils.s3upload import push_files_in_folder_to_s3
+
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -31,7 +37,7 @@ logger = logging.getLogger(__name__)
 @click.option(
     "--burst_id_list",
     required=False,
-    multiple=True,
+    type=str,
     help="List of burst IDs separated by space. e.g. t070_149815_iw2 t070_149815_iw3",
 )
 @click.option(
@@ -105,7 +111,22 @@ logger = logging.getLogger(__name__)
     help="Project folder containing the RTC_S1_STATIC data that will be linked to the RTC_S1 bursts. "
     "Expected for linked files path is : s3_bucket/s3_project_folder/collection/burst_id/*files",
 )
+@click.option(
+    "--scene_data_source",
+    required=False,
+    default="CDSE",
+    type=click.Choice(["ASF", "CDSE"]),
+    help="Where to download the scene from.",
+)
+@click.option(
+    "--orbit_data_source",
+    required=False,
+    default="CDSE",
+    type=click.Choice(["ASF", "CDSE"]),
+    help="Where to download the scene from.",
+)
 @click.option("--make-folders", required=False, default=True, help="Create folders")
+@log_timing
 def get_data_for_scene_and_make_run_config(
     scene,
     burst_id_list,
@@ -121,12 +142,21 @@ def get_data_for_scene_and_make_run_config(
     linked_static_layers_s3_bucket,
     linked_static_layers_collection,
     linked_static_layers_s3_project_folder,
+    scene_data_source,
+    orbit_data_source,
     make_folders,
 ):
     """Download the required data for the RTC/opera and create a configuration
     file for the run that points to appropriate files and has the required settings
     """
+
     logger.info(f"Downloading data for scene : {scene}")
+    logger.info(f"Data source for scene download : {scene_data_source}")
+    logger.info(f"Data source for orbit download : {orbit_data_source}")
+
+    # split the burst_id list
+    if burst_id_list:
+        burst_id_list = burst_id_list.split(" ")
 
     # make the base .yaml for RTC processing
     if product == "RTC_S1":
@@ -146,24 +176,27 @@ def get_data_for_scene_and_make_run_config(
     # download the SLC and get scene metadata from asf
     logger.info(f"Downloading SLC for scene : {scene}")
     scene_folder = download_folder / "scenes"
-    SCENE_PATH, asf_scene_metadata = download_slc_from_asf(scene, scene_folder)
+    if scene_data_source == "ASF":
+        SCENE_PATH, asf_scene_metadata = download_slc_from_asf(scene, scene_folder)
+        scene_polygon = Polygon(asf_scene_metadata.geometry["coordinates"][0])
+        polarisation_list = asf_scene_metadata.properties["polarization"].split("+")
+        input_scene_url = asf_scene_metadata.properties["url"]
+    if scene_data_source == "CDSE":
+        SCENE_PATH, cdse_scene_metadata = download_slc_from_cdse(scene, scene_folder)
+        scene_polygon = Polygon(cdse_scene_metadata["geometry"]["coordinates"][0])
+        polarisation_list = cdse_scene_metadata["properties"]["polarisation"].split("&")
+        input_scene_url = cdse_scene_metadata["properties"]["services"]["download"][
+            "url"
+        ]
 
     # check the static layers exist
     if link_static_layers:
-
         if not burst_id_list:
             # list of bursts not provided, get them from the downloaded file
             burst_id_list = []
             logger.info(f"Getting all burst ids from the scene zip file")
-            pol_type = scene.split("_")[4][2:]  # get the pol-type from the scene name
-            pol_map = {
-                "SH": ["HH"],
-                "SV": ["VV"],
-                "DH": ["HH", "HV"],
-                "DV": ["VV", "VH"],
-            }
-            logger.info(f"Scene polarisations : {pol_map[pol_type]}")
-            for pol in pol_map[pol_type]:
+            logger.info(f"Scene polarisations : {polarisation_list}")
+            for pol in polarisation_list:
                 burst_id_list += [
                     str(b.burst_id)
                     for b in s1_info.get_bursts(SCENE_PATH, pol=pol.lower())
@@ -183,8 +216,8 @@ def get_data_for_scene_and_make_run_config(
     # # download the orbits
     logger.info(f"Downloading Orbits for scene : {scene}")
     orbit_folder = download_folder / "orbits"
-    ORBIT_PATHS = download_orbits_from_datahub(
-        sentinel_file=scene + ".SAFE", save_dir=orbit_folder
+    ORBIT_PATHS = download_orbits(
+        sentinel_file=scene + ".SAFE", save_dir=orbit_folder, source=orbit_data_source
     )
     if len(ORBIT_PATHS) > 1:
         raise ValueError(
@@ -195,7 +228,6 @@ def get_data_for_scene_and_make_run_config(
     # # download the dem
     dem_folder = download_folder / "dem"
     DEM_PATH = dem_folder / f"{scene}_dem.tif"
-    scene_polygon = Polygon(asf_scene_metadata.geometry["coordinates"][0])
     bounds = scene_polygon.bounds
 
     logger.info(f"Downloading DEM type `{dem}` to path : {DEM_PATH}")
@@ -218,7 +250,7 @@ def get_data_for_scene_and_make_run_config(
     RTC_RUN_CONFIG.set(f"{gk}.input_file_group.safe_file_path", [str(SCENE_PATH)])
     RTC_RUN_CONFIG.set(
         f"{gk}.input_file_group.source_data_access",
-        asf_scene_metadata.properties["url"],
+        input_scene_url,
     )
     RTC_RUN_CONFIG.set(f"{gk}.input_file_group.orbit_file_path", [str(ORBIT_PATHS[0])])
     RTC_RUN_CONFIG.set(f"{gk}.dynamic_ancillary_file_group.dem_file", str(DEM_PATH))
@@ -256,9 +288,8 @@ def get_data_for_scene_and_make_run_config(
         )
 
     # set the polarisation
-    POLARIZATION = asf_scene_metadata.properties["polarization"]
     POLARIZATION_TYPE = (
-        "dual-pol" if len(POLARIZATION) > 2 else "co-pol"
+        "dual-pol" if len(polarisation_list) > 1 else "co-pol"
     )  # string for template value
     RTC_RUN_CONFIG.set(f"{gk}.processing.polarization", POLARIZATION_TYPE)
 
@@ -322,6 +353,7 @@ def get_data_for_scene_and_make_run_config(
     "STAC metadata. If set, the url to the static layer collection will "
     "be read in from the .h5 output from the rtc_s1.py process.",
 )
+@log_timing
 def make_rtc_opera_stac_and_upload_bursts(
     results_folder,
     run_config_path,

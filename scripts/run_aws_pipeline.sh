@@ -17,6 +17,8 @@ link_static_layers=false
 linked_static_layers_s3_bucket="deant-data-public-dev"
 linked_static_layers_s3_project_folder="experimental"
 linked_static_layers_collection="s1_rtc_static_c1"
+scene_data_source="CDSE"
+orbit_data_source="CDSE"
 
 # Final product output paths follow the following structure
 # RTC_S1 -> s3_bucket/s3_project_folder/collection/burst_id/year/month/day/*files
@@ -37,6 +39,8 @@ while [[ "$#" -gt 0 ]]; do
         --linked_static_layers_s3_bucket) linked_static_layers_s3_bucket="$2"; shift 2 ;;
         --linked_static_layers_collection) linked_static_layers_collection="$2"; shift 2 ;;
         --linked_static_layers_s3_project_folder) linked_static_layers_s3_project_folder="$2"; shift 2 ;;
+        --scene_data_source) scene_data_source="$2"; shift 2 ;;
+        --orbit_data_source) orbit_data_source="$2"; shift 2 ;;
         --burst_id_list)
             shift
             if [[ $# -eq 1 && -f "$1" ]]; then
@@ -97,6 +101,8 @@ echo product : "$product"
 echo s3_bucket : "$s3_bucket"
 echo s3_project_folder : "$s3_project_folder"
 echo collection : "$collection"
+echo scene_data_source : "$scene_data_source"
+echo orbit_data_source : "$orbit_data_source"
 
 # warn the user about linking static layers
 if [[ "$link_static_layers" = true && "$product" = "RTC_S1" ]]; then
@@ -145,7 +151,10 @@ cmd=(
     --download-folder "$download_folder" \
     --scratch-folder "$scratch_folder" \
     --out-folder "$out_folder" \
-    --run-config-save-path "$RUN_CONFIG_PATH"
+    --run-config-save-path "$RUN_CONFIG_PATH" \
+    --scene_data_source "$scene_data_source" \
+    --orbit_data_source "$orbit_data_source" \
+    
 )
 
 if [ "$link_static_layers" = true ] ; then
@@ -161,7 +170,7 @@ fi
 
 # Conditionally add --burst_id_list only if burst_ids is non-empty
 if [[ ${#burst_ids[@]} -gt 0 ]]; then
-    cmd+=(--burst_id_list "${burst_ids[@]}")
+    cmd+=(--burst_id_list "${burst_ids[*]}")
 fi
 
 # Execute the command
