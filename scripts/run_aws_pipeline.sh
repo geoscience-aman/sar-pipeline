@@ -12,7 +12,7 @@ s3_bucket="deant-data-public-dev"
 s3_project_folder="experimental"
 collection="s1_rtc_c1"
 skip_existing_products=false
-upload_to_s3=true
+skip_upload_to_s3=false
 ## -- WORKFLOW INPUTS TO LINK RTC_S1_STATIC in RTC_S1 metadata--
 # Assumes that a RTC_S1_STATIC products exist for all RTC_S1 bursts being processed
 link_static_layers=false
@@ -38,7 +38,7 @@ while [[ "$#" -gt 0 ]]; do
         --s3_project_folder) s3_project_folder="$2"; shift 2 ;;
         --collection) collection="$2"; shift 2 ;;
         --skip_existing_products) skip_existing_products=true; shift ;;
-        --upload_to_s3) upload_to_s3="$2"; shift 2 ;;
+        --skip_upload_to_s3) skip_upload_to_s3="$2"; shift 2 ;;
         --link_static_layers) link_static_layers=true; shift ;;
         --linked_static_layers_s3_bucket) linked_static_layers_s3_bucket="$2"; shift 2 ;;
         --linked_static_layers_collection) linked_static_layers_collection="$2"; shift 2 ;;
@@ -106,7 +106,7 @@ echo s3_bucket : "$s3_bucket"
 echo s3_project_folder : "$s3_project_folder"
 echo collection : "$collection"
 echo skip_existing_products : "$skip_existing_products"
-echo upload_to_s3 : "$upload_to_s3"
+echo skip_upload_to_s3 : "$skip_upload_to_s3"
 echo scene_data_source : "$scene_data_source"
 echo orbit_data_source : "$orbit_data_source"
 
@@ -223,8 +223,8 @@ cmd=(
     --s3-project-folder "$s3_project_folder" 
 )
 
-if [ "$upload_to_s3" = true ] ; then
-    cmd+=( --upload-to-s3)
+if [ "$skip_upload_to_s3" = true ] ; then
+    cmd+=( --skip-upload-to-s3)
 fi
 if [ "$link_static_layers" = true ] ; then
     # Static layers are to be linked to RTC_S1 in the stac metadata

@@ -421,7 +421,7 @@ def get_data_for_scene_and_make_run_config(
     "final path follows the patter in the description of this function.",
 )
 @click.option(
-    "--upload-to-s3",
+    "--skip-upload-to-s3",
     required=False,
     is_flag=True,
     default=False,
@@ -444,7 +444,7 @@ def make_rtc_opera_stac_and_upload_bursts(
     collection,
     s3_bucket,
     s3_project_folder,
-    upload_to_s3,
+    skip_upload_to_s3,
     link_static_layers,
 ):
     """makes STAC metadata for opera-rtc and uploads them to a desired s3 bucket.
@@ -500,10 +500,10 @@ def make_rtc_opera_stac_and_upload_bursts(
         # TODO validate the stac item when finalised
         # burst_stac_manager.item.validate()
         # push folder to S3
-        if upload_to_s3:
+        if skip_upload_to_s3:
+            logger.info(f"Skipping upload to S3.")
+        else:
             logger.info(f"uploading files for {burst_stac_manager.burst_id} to S3.")
             push_files_in_folder_to_s3(
                 burst_folder, s3_bucket, burst_stac_manager.burst_s3_subfolder
             )
-        else:
-            logger.info(f"Skipping upload to S3.")
