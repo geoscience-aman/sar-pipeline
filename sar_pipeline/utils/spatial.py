@@ -17,7 +17,6 @@ def polygon_str_to_geojson(polygon_str: str) -> dict:
     dict
         Geojson for the polygon
     """
-    logging.info(polygon_str)
     # Load and convert
     geometry = wkt.loads(polygon_str)
     geojson_feature = {

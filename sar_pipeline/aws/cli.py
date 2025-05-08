@@ -2,6 +2,7 @@ import click
 import logging
 from pathlib import Path
 import shutil
+import sys
 from shapely.geometry import Polygon
 from s1reader import s1_info
 
@@ -10,9 +11,10 @@ from sar_pipeline.aws.preparation.scenes import (
     download_slc_from_cdse,
 )
 from sar_pipeline.aws.preparation.orbits import download_orbits
-from sar_pipeline.aws.preparation.static_layers import (
+from sar_pipeline.aws.preparation.burst_utils import (
     check_static_layers_in_s3,
     make_static_layer_base_url,
+    check_burst_products_exists_in_s3,
 )
 
 from sar_pipeline.aws.preparation.config import RTCConfigManager
@@ -52,12 +54,30 @@ logger = logging.getLogger(__name__)
     default="",
     help="The output CRS as an integer. e.g. 3031. If [None,'UTM','utm'] the default UTM zone for scene/burst center is used (polar stereo at lat>75).",
 )
-@click.option("--dem", required=True, type=click.Choice(["cop_glo30"]))
+@click.option("--dem-type", required=True, type=click.Choice(["cop_glo30"]))
 @click.option(
     "--product",
     required=True,
     type=click.Choice(["RTC_S1", "RTC_S1_STATIC"]),
     help="The product to be made",
+)
+@click.option(
+    "--s3-bucket",
+    required=True,
+    type=str,
+    help="S3 bucket where the product will be uploaded",
+)
+@click.option(
+    "--s3-project-folder",
+    required=True,
+    type=str,
+    help="project folder in the s3 bucket",
+)
+@click.option(
+    "--collection",
+    required=True,
+    type=str,
+    help="collection associated with product. e.g. s1_rtc_c1",
 )
 @click.option(
     "--download-folder",
@@ -82,6 +102,14 @@ logger = logging.getLogger(__name__)
     required=True,
     type=click.Path(dir_okay=False, path_type=Path),
     help="Path to where the RTC/opera config wil be saved",
+)
+@click.option(
+    "--skip-existing-products",
+    required=False,
+    is_flag=True,
+    default=False,
+    help="Skip the creating burst products if it already exist in the desired s3 bucket path. "
+    "Warning - false may result in duplicate products",
 )
 @click.option(
     "--link-static-layers",
@@ -112,14 +140,14 @@ logger = logging.getLogger(__name__)
     "Expected for linked files path is : s3_bucket/s3_project_folder/collection/burst_id/*files",
 )
 @click.option(
-    "--scene_data_source",
+    "--scene-data-source",
     required=False,
     default="CDSE",
     type=click.Choice(["ASF", "CDSE"]),
     help="Where to download the scene from.",
 )
 @click.option(
-    "--orbit_data_source",
+    "--orbit-data-source",
     required=False,
     default="CDSE",
     type=click.Choice(["ASF", "CDSE"]),
@@ -132,12 +160,16 @@ def get_data_for_scene_and_make_run_config(
     burst_id_list,
     resolution,
     output_crs,
-    dem,
+    dem_type,
     product,
+    s3_bucket,
+    s3_project_folder,
+    collection,
     download_folder,
     scratch_folder,
     out_folder,
     run_config_save_path,
+    skip_existing_products,
     link_static_layers,
     linked_static_layers_s3_bucket,
     linked_static_layers_collection,
@@ -153,10 +185,6 @@ def get_data_for_scene_and_make_run_config(
     logger.info(f"Downloading data for scene : {scene}")
     logger.info(f"Data source for scene download : {scene_data_source}")
     logger.info(f"Data source for orbit download : {orbit_data_source}")
-
-    # split the burst_id list
-    if burst_id_list:
-        burst_id_list = burst_id_list.split(" ")
 
     # make the base .yaml for RTC processing
     if product == "RTC_S1":
@@ -189,21 +217,69 @@ def get_data_for_scene_and_make_run_config(
             "url"
         ]
 
-    # check the static layers exist
-    if link_static_layers:
-        if not burst_id_list:
-            # list of bursts not provided, get them from the downloaded file
-            burst_id_list = []
-            logger.info(f"Getting all burst ids from the scene zip file")
-            logger.info(f"Scene polarisations : {polarisation_list}")
-            for pol in polarisation_list:
-                burst_id_list += [
-                    str(b.burst_id)
-                    for b in s1_info.get_bursts(SCENE_PATH, pol=pol.lower())
-                ]
-            burst_id_list = list(set(burst_id_list))  # remove duplicates
-            logger.info(f"{len(burst_id_list)} bursts found for scene")
+    # get burst data from the slc
+    slc_bursts_info = []
+    logger.info(f"Getting burst information from the scene slc file")
+    logger.info(f"Scene polarisations : {polarisation_list}")
+    for pol in polarisation_list:
+        slc_bursts_info += s1_info.get_bursts(SCENE_PATH, pol=pol.lower())
+        all_slc_burst_id_list = [str(b.burst_id) for b in slc_bursts_info]
+        all_slc_burst_id_list = list(set(all_slc_burst_id_list))
+    logger.info(f"{len(all_slc_burst_id_list)} burst ids found for scene in the slc")
+    # split the burst_id list
+    if burst_id_list:
+        logger.info(f"List of bursts to process provided")
+        burst_id_list = burst_id_list.split(" ")
+        slc_bursts_info = [
+            b for b in slc_bursts_info if str(b.burst_id) in burst_id_list
+        ]
+        burst_id_list = list(set(burst_id_list))
+    else:
+        logger.info(f"List of bursts not provided, processing all")
+        burst_id_list = all_slc_burst_id_list
 
+    # check if the files already exist in S3
+    logger.info(
+        f"Checking if burst products already exists in S3 for product {product}"
+    )
+    existing_burst_ids, existing_s3_paths = check_burst_products_exists_in_s3(
+        product=product,
+        slc_bursts_info=slc_bursts_info,
+        s3_bucket=s3_bucket,
+        s3_project_folder=s3_project_folder,
+        collection=collection,
+    )
+    if len(existing_burst_ids) > 0:
+        logging.warning(
+            f"Products already exist for {len(existing_burst_ids)} of {len(burst_id_list)} requested bursts:"
+        )
+        for i in range(0, len(existing_burst_ids)):
+            logger.warning(
+                f"Existing product : {existing_burst_ids[i]}, s3_path : {s3_bucket}/{existing_s3_paths[i]}"
+            )
+        if skip_existing_products:
+            # limit burst ids to those which haven't been processed
+            burst_id_list = [b for b in burst_id_list if b not in existing_burst_ids]
+            logger.warning(
+                "Skipping existing products. To create these, remove the existing products from S3. OR, do not pass flag "
+                "'--skip-existing-products'. Note this will create duplicates that may need to be handled downstream"
+            )
+            if all(b in existing_burst_ids for b in burst_id_list):
+                logging.warning(
+                    "All desired burst products already exist, exiting process early"
+                )
+                sys.exit(100)
+        else:
+            logger.warning(
+                "Existing products are being created. Note this will create duplicates that may need to be handled downstream. "
+                "set '--skip-existing-products' if this is not desired."
+            )
+
+    logger.info(f"Processing {len(burst_id_list)} bursts for scene : {burst_id_list}")
+
+    # check the static layers exist
+    # to link the RTC_S1_STATIC layers to RTC_S1, they must already exist
+    if link_static_layers and product == "RTC_S1":
         logger.info(f"Checking static layers exist for bursts in scene : {scene}")
         check_static_layers_in_s3(
             scene=scene,
@@ -226,11 +302,11 @@ def get_data_for_scene_and_make_run_config(
     logger.info(f"File downloaded to : {ORBIT_PATHS[0]}")
 
     # # download the dem
-    dem_folder = download_folder / "dem"
+    dem_folder = download_folder / "dem" / dem_type
     DEM_PATH = dem_folder / f"{scene}_dem.tif"
     bounds = scene_polygon.bounds
 
-    logger.info(f"Downloading DEM type `{dem}` to path : {DEM_PATH}")
+    logger.info(f"Downloading DEM type `{dem_type}` to path : {DEM_PATH}")
     get_cop30_dem_for_bounds(
         bounds=bounds,
         save_path=DEM_PATH,
@@ -256,7 +332,7 @@ def get_data_for_scene_and_make_run_config(
     RTC_RUN_CONFIG.set(f"{gk}.dynamic_ancillary_file_group.dem_file", str(DEM_PATH))
 
     # set the dem input source
-    if dem == "cop_glo30":
+    if dem_type == "cop_glo30":
         demSource = "https://registry.opendata.aws/copernicus-dem/"
         RTC_RUN_CONFIG.set(
             f"{gk}.dynamic_ancillary_file_group.dem_file_description", demSource
@@ -345,6 +421,13 @@ def get_data_for_scene_and_make_run_config(
     "final path follows the patter in the description of this function.",
 )
 @click.option(
+    "--upload-to-s3",
+    required=False,
+    is_flag=True,
+    default=False,
+    help="If we should upload outputs to S3.",
+)
+@click.option(
     "--link-static-layers",
     required=False,
     is_flag=True,
@@ -361,6 +444,7 @@ def make_rtc_opera_stac_and_upload_bursts(
     collection,
     s3_bucket,
     s3_project_folder,
+    upload_to_s3,
     link_static_layers,
 ):
     """makes STAC metadata for opera-rtc and uploads them to a desired s3 bucket.
@@ -416,6 +500,10 @@ def make_rtc_opera_stac_and_upload_bursts(
         # TODO validate the stac item when finalised
         # burst_stac_manager.item.validate()
         # push folder to S3
-        push_files_in_folder_to_s3(
-            burst_folder, s3_bucket, burst_stac_manager.burst_s3_subfolder
-        )
+        if upload_to_s3:
+            logger.info(f"uploading files for {burst_stac_manager.burst_id} to S3.")
+            push_files_in_folder_to_s3(
+                burst_folder, s3_bucket, burst_stac_manager.burst_s3_subfolder
+            )
+        else:
+            logger.info(f"Skipping upload to S3.")

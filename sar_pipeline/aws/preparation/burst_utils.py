@@ -3,12 +3,27 @@ from datetime import datetime, timedelta
 import boto3
 import os
 import logging
+import s1reader
+from typing import Literal
 
 from sar_pipeline.aws.metadata.filetypes import REQUIRED_ASSET_FILETYPES
 from sar_pipeline.nci.preparation.scenes import parse_scene_file_dates
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+
+def check_aws_environment_credentials():
+    # search for credentials in environment and raise warning if not there
+    if os.environ.get("AWS_ACCESS_KEY_ID") is None:
+        wrn_msg = "AWS_ACCESS_KEY_ID is not set in environment variables. Set if authentication required on bucket"
+        logging.warning(wrn_msg)
+    if os.environ.get("AWS_SECRET_ACCESS_KEY") is None:
+        wrn_msg = "AWS_ACCESS_KEY_ID is not set in environment variables. Set if authentication required on bucket"
+        logging.warning(wrn_msg)
+    if os.environ.get("AWS_DEFAULT_REGION") is None:
+        wrn_msg = "AWS_DEFAULT_REGION is not set in environment variables. Set if authentication required on bucket"
+        logging.warning(wrn_msg)
 
 
 def find_s3_filepaths_from_suffixes(bucket_name, s3_folder, suffixes) -> dict:
@@ -35,17 +50,7 @@ def find_s3_filepaths_from_suffixes(bucket_name, s3_folder, suffixes) -> dict:
         }
     """
 
-    # search for credentials in environment and raise warning if not there
-    if os.environ.get("AWS_ACCESS_KEY_ID") is None:
-        wrn_msg = "AWS_ACCESS_KEY_ID is not set in environment variables. Set if authentication required on bucket"
-        logging.warning(wrn_msg)
-    if os.environ.get("AWS_SECRET_ACCESS_KEY") is None:
-        wrn_msg = "AWS_ACCESS_KEY_ID is not set in environment variables. Set if authentication required on bucket"
-        logging.warning(wrn_msg)
-    if os.environ.get("AWS_DEFAULT_REGION") is None:
-        wrn_msg = "AWS_DEFAULT_REGION is not set in environment variables. Set if authentication required on bucket"
-        logging.warning(wrn_msg)
-
+    check_aws_environment_credentials()
     s3 = boto3.client("s3")
 
     response = s3.list_objects_v2(Bucket=bucket_name, Prefix=s3_folder)
@@ -128,12 +133,136 @@ def make_static_layer_base_url(
     Returns
     -------
     str
-        The url where burst static layers are kept
+        The url to the index file where static layers are stored for user
+        visibility
     """
+    root_static_layer_path = make_rtc_s1_static_s3_subpath(
+        s3_project_folder=static_layers_s3_project_folder,
+        collection=static_layers_collection,
+        burst_id="",
+    )
     return (
         f"https://{static_layers_s3_bucket}.s3.{s3_region}.amazonaws.com"
-        f"/{static_layers_s3_project_folder}/{static_layers_collection}"
+        f"/index.html?prefix={root_static_layer_path}"
     )
+
+
+def check_burst_products_exists_in_s3(
+    product: Literal["RTC_S1", "RTC_S1_STATIC"],
+    slc_bursts_info: list[s1reader.Sentinel1BurstSlc],
+    s3_bucket: str,
+    s3_project_folder: str,
+    collection: str,
+) -> tuple[list[str], list[str]]:
+    """Check if the product already exists in s3. The storage location differs
+    for static layers (RTC_S1_STATIC) and backscatter (RTC_S1). This function checks
+    to see if a .h5 file exists for the given product in s3.
+
+    Parameters
+    ----------
+    product : str
+        Product being created, either 'RTC_S1' or 'RTC_S1_STATIC'
+    slc_bursts_info : list[s1reader.Sentinel1BurstSlc]
+        List of s1reader burst classes containing information for each burst
+    s3_bucket : str
+        The bucket where the products are stored
+    s3_project_folder : str
+        The subpath within the bucket
+    collection : str
+        The collection. e.f. rtc_s1_c1
+
+    Returns
+    -------
+    tuple(list,list)
+        0: List of burst ids where products already exist
+            e.g. ['t028_059508_iw1','t028_059507_iw2' ...]
+        1: List of s3 paths corresponding to existing products.
+    """
+
+    existing_burst_ids = []
+    existing_s3_paths = []
+
+    for burst in slc_bursts_info:
+        if product == "RTC_ST_STATIC":
+            s3_product_subpath = make_rtc_s1_static_s3_subpath(
+                s3_project_folder=s3_project_folder,
+                collection=collection,
+                burst_id=str(burst.burst_id),
+            )
+        if product == "RTC_S1":
+            sensing_start = burst.sensing_start
+            s3_product_subpath = make_rtc_s1_s3_subpath(
+                s3_project_folder=s3_project_folder,
+                collection=collection,
+                burst_id=str(burst.burst_id),
+                year=sensing_start.year,
+                month=sensing_start.month,
+                day=sensing_start.day,
+            )
+        # assume the product exists if there is a .h5 file
+        product_h5_files = find_s3_filepaths_from_suffixes(
+            bucket_name=s3_bucket, s3_folder=s3_product_subpath, suffixes=[".h5"]
+        )
+        if len(product_h5_files[".h5"]) > 0:
+            existing_burst_ids.append(str(burst.burst_id))
+            existing_s3_paths.append(s3_product_subpath)
+
+    return existing_burst_ids, existing_s3_paths
+
+
+def make_rtc_s1_s3_subpath(
+    s3_project_folder: str,
+    collection: str,
+    burst_id: str,
+    year: str,
+    month: str,
+    day: str,
+):
+    """Structure for the rtc_s1 product sub-folders. These include
+    information about when the burst was acquired.
+
+    Parameters
+    ----------
+    s3_project_folder : str
+        s3 project folder
+    collection : str
+        collection. e.g. rtc_s1_static_c1
+    burst_id : str
+        burst_id. e.g. t028_059507_iw2
+    year : str
+        year of burst acquisition
+    month : str
+        month of burst acquisition
+    day : str
+        day of burst acquisition
+    """
+    return f"{s3_project_folder}/{collection}/{burst_id}/{year}/{month}/{day}"
+
+
+def make_rtc_s1_static_s3_subpath(
+    s3_project_folder: str,
+    collection: str,
+    burst_id: str,
+) -> str:
+    """Structure for the bucket subpath for static layers
+
+    Parameters
+    ----------
+    s3_project_folder : str
+        s3 project folder
+    collection : str
+        collection. e.g. rtc_s1_static_c1
+    burst_id : str
+        burst_id. e.g. t028_059507_iw2
+
+    Returns
+    -------
+    str
+        path to the s3 bucket subfolder
+        e.g. my-subfolder/s1_rtc_static_c1/t028_059507_iw2
+    """
+
+    return f"{s3_project_folder}/{collection}/{burst_id}"
 
 
 def check_static_layers_in_s3(
