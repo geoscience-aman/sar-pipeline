@@ -108,8 +108,8 @@ logger = logging.getLogger(__name__)
     required=False,
     is_flag=True,
     default=False,
-    help="Skip the creating burst products if it already exist in the desired s3 bucket path. "
-    "Warning - false may result in duplicate products",
+    help="Skip creating the burst products if it already exist in the desired s3 bucket path. "
+    "Warning - setting this argument false may result in duplicate products",
 )
 @click.option(
     "--link-static-layers",
