@@ -235,6 +235,12 @@ def make_rtc_s1_s3_subpath(
         month of burst acquisition
     day : str
         day of burst acquisition
+
+    Returns
+    -------
+    str
+        path to the s3 bucket subfolder
+        e.g. my-subfolder/s1_rtc_c1/t028_059507_iw2/2022/01/01
     """
     return f"{s3_project_folder}/{collection}/{burst_id}/{year}/{month}/{day}"
 

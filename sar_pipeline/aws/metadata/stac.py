@@ -134,15 +134,13 @@ class BurstH5toStacManager:
                 day=self.start_dt.day,
             )
 
-        if self.product == "RTC_S1_STATIC":
+        elif self.product == "RTC_S1_STATIC":
             # static products are date independent
             return make_rtc_s1_static_s3_subpath(
                 s3_project_folder=self.s3_project_folder,
                 collection=self.collection,
                 burst_id=self.burst_id,
             )
-        else:
-            raise ValueError()
 
     def _extract_doi_link(self, text: str) -> str:
         """extracts the doi reference from a given string and converts
