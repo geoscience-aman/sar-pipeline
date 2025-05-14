@@ -253,6 +253,7 @@ def get_data_for_scene_and_make_run_config(
         logging.warning(
             f"Products already exist for {len(existing_burst_ids)} of {len(burst_id_list)} requested bursts:"
         )
+        # iterate through existing products and show message with path
         for i in range(0, len(existing_burst_ids)):
             logger.warning(
                 f"Existing product : {existing_burst_ids[i]}, s3_path : {s3_bucket}/{existing_s3_paths[i]}"
@@ -261,9 +262,10 @@ def get_data_for_scene_and_make_run_config(
             # limit burst ids to those which haven't been processed
             burst_id_list = [b for b in burst_id_list if b not in existing_burst_ids]
             logger.warning(
-                "Skipping existing products. To create these, remove the existing products from S3. OR, do not pass flag "
-                "'--skip-existing-products'. Note this will create duplicates that may need to be handled downstream"
+                "Skipping the existing products. To create these, remove the existing products from S3. OR, do not pass flag "
+                "'--skip-existing-products' to workflow. Note this will create duplicates that may need to be handled downstream."
             )
+            # exit if all existing burst products exist
             if all(b in existing_burst_ids for b in burst_id_list):
                 logging.warning(
                     "All desired burst products already exist, exiting process early"
@@ -271,8 +273,8 @@ def get_data_for_scene_and_make_run_config(
                 sys.exit(100)
         else:
             logger.warning(
-                "Existing products are being created. Note this will create duplicates that may need to be handled downstream. "
-                "set '--skip-existing-products' if this is not desired."
+                "Existing products are being re-created. This will create duplicates in the S3 bucket that may need to be handled downstream. "
+                "set '--skip-existing-products' if this behavior is not desired."
             )
 
     logger.info(f"Processing {len(burst_id_list)} bursts for scene : {burst_id_list}")
