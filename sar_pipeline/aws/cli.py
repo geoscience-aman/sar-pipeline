@@ -263,7 +263,7 @@ def get_data_for_scene_and_make_run_config(
             burst_id_list = [b for b in burst_id_list if b not in existing_burst_ids]
             logger.warning(
                 "Skipping the existing products. To create these, remove the existing products from S3. OR, pass flag "
-                "'--make-existing-products' to workflow. Note this can create duplicates that may impact downstream processes."
+                "'--make-existing-products' to workflow. WARNING this can create duplicates that may impact downstream processes."
             )
             # exit if all existing burst products exist
             if all(b in existing_burst_ids for b in burst_id_list):
