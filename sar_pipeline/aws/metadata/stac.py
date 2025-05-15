@@ -203,6 +203,9 @@ class BurstH5toStacManager:
     def add_properties_from_h5(self):
         """Map required properties from the .h5 file"""
 
+        # add odc specific fields
+        self.item.properties["odc:product"] = self.collection
+
         # add product stac extension properties
         self.item.properties["product:type"] = self.product
         self.item.properties["product:timeliness_category"] = (
