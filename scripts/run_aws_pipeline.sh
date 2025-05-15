@@ -11,7 +11,7 @@ product="RTC_S1"
 s3_bucket="deant-data-public-dev"
 s3_project_folder="experimental"
 collection="s1_rtc_c1"
-skip_existing_products=false
+make_existing_products=false
 skip_upload_to_s3=false
 ## -- WORKFLOW INPUTS TO LINK RTC_S1_STATIC in RTC_S1 metadata--
 # Assumes that a RTC_S1_STATIC products exist for all RTC_S1 bursts being processed
@@ -37,7 +37,7 @@ while [[ "$#" -gt 0 ]]; do
         --s3_bucket) s3_bucket="$2"; shift 2 ;;
         --s3_project_folder) s3_project_folder="$2"; shift 2 ;;
         --collection) collection="$2"; shift 2 ;;
-        --skip_existing_products) skip_existing_products=true; shift ;;
+        --make_existing_products) make_existing_products=true; shift ;;
         --skip_upload_to_s3) skip_upload_to_s3==true; shift ;;
         --link_static_layers) link_static_layers=true; shift ;;
         --linked_static_layers_s3_bucket) linked_static_layers_s3_bucket="$2"; shift 2 ;;
@@ -105,7 +105,7 @@ echo product : "$product"
 echo s3_bucket : "$s3_bucket"
 echo s3_project_folder : "$s3_project_folder"
 echo collection : "$collection"
-echo skip_existing_products : "$skip_existing_products"
+echo make_existing_products : "$make_existing_products"
 echo skip_upload_to_s3 : "$skip_upload_to_s3"
 echo scene_data_source : "$scene_data_source"
 echo orbit_data_source : "$orbit_data_source"
@@ -165,10 +165,10 @@ cmd=(
     --orbit-data-source "$orbit_data_source" \
 )
 
-if [ "$skip_existing_products" = true ] ; then
+if [ "$make_existing_products" = true ] ; then
     # make the product even if it already exists
     # WARNING - this may result in duplicates
-    cmd+=( --skip-existing-products )
+    cmd+=( --make-existing-products )
 fi
 if [ "$link_static_layers" = true ] ; then
     # Static layers ARE being linked in the stac metadata
