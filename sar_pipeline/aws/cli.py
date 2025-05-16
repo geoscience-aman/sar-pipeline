@@ -23,6 +23,7 @@ from sar_pipeline.utils.s3upload import push_files_in_folder_to_s3
 from sar_pipeline.utils.general import log_timing
 
 from dem_handler.dem.cop_glo30 import get_cop30_dem_for_bounds
+from dem_handler.dem.rema import get_rema_dem_for_bounds
 
 
 logging.basicConfig(level=logging.INFO)
@@ -54,7 +55,11 @@ logger = logging.getLogger(__name__)
     default="",
     help="The output CRS as an integer. e.g. 3031. If [None,'UTM','utm'] the default UTM zone for scene/burst center is used (polar stereo at lat>75).",
 )
-@click.option("--dem-type", required=True, type=click.Choice(["cop_glo30"]))
+@click.option(
+    "--dem-type",
+    required=True,
+    type=click.Choice(["cop_glo30", "REMA_32", "REMA_10", "REMA_2"]),
+)
 @click.option(
     "--product",
     required=True,
@@ -309,18 +314,35 @@ def get_data_for_scene_and_make_run_config(
     bounds = scene_polygon.bounds
 
     logger.info(f"Downloading DEM type `{dem_type}` to path : {DEM_PATH}")
-    get_cop30_dem_for_bounds(
-        bounds=bounds,
-        save_path=DEM_PATH,
-        ellipsoid_heights=True,
-        adjust_at_high_lat=True,
-        buffer_pixels=None,
-        buffer_degrees=0.3,
-        cop30_folder_path=dem_folder,
-        geoid_tif_path=dem_folder / f"{scene}_geoid.tif",
-        download_dem_tiles=True,
-        download_geoid=True,
-    )
+    if dem_type == "cop_glo30":
+        get_cop30_dem_for_bounds(
+            bounds=bounds,
+            save_path=DEM_PATH,
+            ellipsoid_heights=True,
+            adjust_at_high_lat=True,
+            buffer_pixels=None,
+            buffer_degrees=0.3,
+            cop30_folder_path=dem_folder,
+            geoid_tif_path=dem_folder / f"{scene}_geoid.tif",
+            download_dem_tiles=True,
+            download_geoid=True,
+        )
+    elif dem_type in ["REMA_32", "REMA_10", "REMA_2"]:
+        dem_resolution = int(dem_type.split("_")[1])
+        get_rema_dem_for_bounds(
+            bounds=bounds,
+            bounds_src_crs=4326,
+            save_path=DEM_PATH,
+            resolution=dem_resolution,
+            ellipsoid_heights=True,
+            download_geoid=True,
+            geoid_tif_path=dem_folder / f"{scene}_geoid.tif",
+            download_dir=dem_folder,
+        )
+    else:
+        raise ValueError(
+            'dem_type must be one of ["cop_glo30","REMA_32","REMA_10","REMA_2"]'
+        )
 
     # Update input and ancillary data
     logger.info(f"Updating the run config for scene")
