@@ -79,13 +79,13 @@ The AWS pipeline runs using a docker container. At runtime, the script [run_aws_
 - `burst_id_list` -> A list of burst id's corresponding to the scene. If not provided, all will be processed. Can be space separated list or line separated .txt file.
 - `resolution` -> The target resolution of the products. Default is 20m.
 - `output_crs` -> The target crs of the products. If not specified, the UTM of the scene center will be used. Expects integer values (e.g. 3031)
-- `dem_type` -> The dem to be used in processing. Supported is [`cop_glo30`, `REMA_32`, `REMA_10`, `REMA_2`].
+- `dem_type` -> The type of digital elevation model (DEM) to download and use for processing. Supported values: `cop_glo30`, `REMA_32`, `REMA_10`, `REMA_2`.
 - `product` -> The product being created with the workflow. Must be `RTC_S1` or `RTC_S1_STATIC`.
 - `s3_bucket` -> the bucket to upload the products
 - `s3_project_folder` -> The project folder to upload to.
 - `collection` -> The collection which the set of products belongs.
-- `make_existing_products` -> If products should be made, even if they already exist in S3. 
-  - **WARNING**, - Setting will create duplicate files and overwrite metadata that will impact downstream processes.
+- `make_existing_products` -> Whether to generate products even if they already exist in AWS S3 under the specified product folder path `s3_bucket/s3_project_folder/collection/...`. 
+  - **WARNING** - Passing this flag will create duplicate files and overwrite existing metadata, which may affect downstream workflows.
 - `skip_upload_to_s3` -> Make the products, but skip uploading them to S3.
 - `scene_data_source` -> Where to download the scene slc file. Either `ASF` or `CDSE`. The default is `CDSE`.
 - `orbit_data_source` -> Where to download the orbit files. Either `ASF` or `CDSE`. The default is `CDSE`.
@@ -145,24 +145,26 @@ docker build -t sar-pipeline -f Docker/Dockerfile .
 
 ## RTC_S1 - Sentinel-1 Radiometrically Terrain Corrected (RTC) Backscatter
 
+- Note, remove the `--skip_upload_to_s3` and `--make_existing_products` to make non-existing products and access them from the s3. 
+
 ### Antarctica (without linking RTC_S1_STATIC)
 
 Output CRS should be polar stereographic 3031
 
 ```bash
-docker run --env-file env.secret -it sar-pipeline --scene S1A_IW_SLC__1SSH_20220101T124744_20220101T124814_041267_04E7A2_1DAD --output_crs 3031
+docker run --env-file env.secret -it sar-pipeline --scene S1A_IW_SLC__1SSH_20220101T124744_20220101T124814_041267_04E7A2_1DAD --output_crs 3031 --skip_upload_to_s3 --make_existing_products
 ```
 
 For a single burst:
 
 ```bash
-docker run --env-file env.secret -it sar-pipeline --scene S1A_IW_SLC__1SSH_20220101T124744_20220101T124814_041267_04E7A2_1DAD --output_crs 3031 --burst_id_list t070_149815_iw3 --skip_upload_to_s3
+docker run --env-file env.secret -it sar-pipeline --scene S1A_IW_SLC__1SSH_20220101T124744_20220101T124814_041267_04E7A2_1DAD --output_crs 3031 --burst_id_list t070_149815_iw3 --skip_upload_to_s3 --make_existing_products
 ```
 
 Using the REMA 32 metre dem
 
 ```bash
-docker run --env-file env.secret -it sar-pipeline --scene S1A_IW_SLC__1SSH_20220101T124744_20220101T124814_041267_04E7A2_1DAD --output_crs 3031 --burst_id_list t070_149815_iw3 --dem_type REMA_32 --skip_upload_to_s3
+docker run --env-file env.secret -it sar-pipeline --scene S1A_IW_SLC__1SSH_20220101T124744_20220101T124814_041267_04E7A2_1DAD --output_crs 3031 --burst_id_list t070_149815_iw3 --dem_type REMA_32 --skip_upload_to_s3 --make_existing_products
 ```bash
 
 ### Australia (without linking RTC_S1_STATIC)
@@ -170,14 +172,14 @@ docker run --env-file env.secret -it sar-pipeline --scene S1A_IW_SLC__1SSH_20220
 The output CRS will be the UTM zone corresponding to scene/burst centre. This is selected automatically and does not need to be specified.
 
 ```bash
-docker run --env-file env.secret -it sar-pipeline --scene S1A_IW_SLC__1SDV_20220130T191354_20220130T191421_041694_04F5F9_1AFD 
+docker run --env-file env.secret -it sar-pipeline --scene S1A_IW_SLC__1SDV_20220130T191354_20220130T191421_041694_04F5F9_1AFD --skip_upload_to_s3 --make_existing_products
 ```
 
 
 ## RTC_S1_STATIC - Static Layers for Sentinel-1 Radiometrically Terrain Corrected (RTC) Backscatter
 
 ```bash
-docker run --env-file env.secret -it sar-pipeline --scene S1A_IW_SLC__1SSH_20220101T124744_20220101T124814_041267_04E7A2_1DAD --output_crs 3031 --product RTC_S1_STATIC --collection s1_rtc_static_c1 --s3_project_folder "experimental"
+docker run --env-file env.secret -it sar-pipeline --scene S1A_IW_SLC__1SSH_20220101T124744_20220101T124814_041267_04E7A2_1DAD --output_crs 3031 --product RTC_S1_STATIC --collection s1_rtc_static_c1 --s3_project_folder "experimental" --skip_upload_to_s3 --make_existing_products
 ```
 
 
@@ -317,19 +319,19 @@ chmod +x /home/rtc_user/scripts/run_aws_pipeline.sh
 
 # Antarctic scene (all bursts)
 
-/home/rtc_user/scripts/run_aws_pipeline.sh --scene S1A_IW_SLC__1SSH_20220101T124744_20220101T124814_041267_04E7A2_1DAD --output_crs 3031
+/home/rtc_user/scripts/run_aws_pipeline.sh --scene S1A_IW_SLC__1SSH_20220101T124744_20220101T124814_041267_04E7A2_1DAD --output_crs 3031 --skip_upload_to_s3 --make_existing_products
 
 # Antarctic scene (single burst)
 
-/home/rtc_user/scripts/run_aws_pipeline.sh --scene S1A_IW_SLC__1SSH_20220101T124744_20220101T124814_041267_04E7A2_1DAD --output_crs 3031 --burst_id_list t070_149815_iw3
+/home/rtc_user/scripts/run_aws_pipeline.sh --scene S1A_IW_SLC__1SSH_20220101T124744_20220101T124814_041267_04E7A2_1DAD --output_crs 3031 --burst_id_list t070_149815_iw3 --skip_upload_to_s3 --make_existing_products
 
 # Australia scene
 
-/home/rtc_user/scripts/run_aws_pipeline.sh --scene S1A_IW_SLC__1SDV_20220130T191354_20220130T191421_041694_04F5F9_1AFD
+/home/rtc_user/scripts/run_aws_pipeline.sh --scene S1A_IW_SLC__1SDV_20220130T191354_20220130T191421_041694_04F5F9_1AFD --skip_upload_to_s3 --make_existing_products
 
 # Antarctica static layers
 
-/home/rtc_user/scripts/run_aws_pipeline.sh --scene S1A_IW_SLC__1SSH_20220101T124744_20220101T124814_041267_04E7A2_1DAD --output_crs 3031 --product RTC_S1_STATIC --collection s1_rtc_static_c1 --s3_project_folder "experimental"
+/home/rtc_user/scripts/run_aws_pipeline.sh --scene S1A_IW_SLC__1SSH_20220101T124744_20220101T124814_041267_04E7A2_1DAD --output_crs 3031 --product RTC_S1_STATIC --collection s1_rtc_static_c1 --s3_project_folder "experimental" --skip_upload_to_s3 --make_existing_products
 
 
 ```
@@ -337,10 +339,10 @@ chmod +x /home/rtc_user/scripts/run_aws_pipeline.sh
 ### Mount files at runtime
 
 ```bash
-docker run --env-file env.secret -v $(pwd)/scripts:/home/rtc_user/scripts -v /data/working:/home/rtc_user/working sar-pipeline --scene S1A_IW_SLC__1SSH_20220101T124744_20220101T124814_041267_04E7A2_1DAD --output_crs 3031
+docker run --env-file env.secret -v $(pwd)/scripts:/home/rtc_user/scripts -v /data/working:/home/rtc_user/working sar-pipeline --scene S1A_IW_SLC__1SSH_20220101T124744_20220101T124814_041267_04E7A2_1DAD --output_crs 3031 --skip_upload_to_s3 --make_existing_products
 
 ```
 
 ```bash
-docker run --env-file env.secret -v $(pwd)/scripts:/home/rtc_user/scripts -v /data/working:/home/rtc_user/working -it sar-pipeline:rema --scene S1A_IW_SLC__1SSH_20220101T124744_20220101T124814_041267_04E7A2_1DAD --output_crs 3031 --burst_id_list t070_149815_iw3 t070_149821_iw1 --s3_project_folder experimental/REMA_32 --dem_type REMA_32 
+docker run --env-file env.secret -v $(pwd)/scripts:/home/rtc_user/scripts -v /data/working:/home/rtc_user/working -it sar-pipeline:rema --scene S1A_IW_SLC__1SSH_20220101T124744_20220101T124814_041267_04E7A2_1DAD --output_crs 3031 --burst_id_list t070_149815_iw3 t070_149821_iw1 --s3_project_folder experimental/REMA_32 --dem_type REMA_32 --skip_upload_to_s3 --make_existing_products
 ```

@@ -59,6 +59,7 @@ logger = logging.getLogger(__name__)
     "--dem-type",
     required=True,
     type=click.Choice(["cop_glo30", "REMA_32", "REMA_10", "REMA_2"]),
+    help="The type of DEM that should be downloaded for processing the scene.",
 )
 @click.option(
     "--product",
