@@ -12,7 +12,6 @@
 - [Running the workflow](#running-the-workflow)
   - [RTC\_S1 - Sentinel-1 Radiometrically Terrain Corrected (RTC) Backscatter](#rtc_s1---sentinel-1-radiometrically-terrain-corrected-rtc-backscatter)
     - [Antarctica (without linking RTC\_S1\_STATIC)](#antarctica-without-linking-rtc_s1_static)
-    - [Australia (without linking RTC\_S1\_STATIC)](#australia-without-linking-rtc_s1_static)
   - [RTC\_S1\_STATIC - Static Layers for Sentinel-1 Radiometrically Terrain Corrected (RTC) Backscatter](#rtc_s1_static---static-layers-for-sentinel-1-radiometrically-terrain-corrected-rtc-backscatter)
 - [Examples](#examples)
   - [Make static layers (RTC\_S1\_STATIC) for a burst and link it to a backscatter product (RTC\_S1)](#make-static-layers-rtc_s1_static-for-a-burst-and-link-it-to-a-backscatter-product-rtc_s1)
@@ -157,8 +156,14 @@ docker run --env-file env.secret -it sar-pipeline --scene S1A_IW_SLC__1SSH_20220
 For a single burst:
 
 ```bash
-docker run --env-file env.secret -it sar-pipeline --scene S1A_IW_SLC__1SSH_20220101T124744_20220101T124814_041267_04E7A2_1DAD --output_crs 3031 --burst_id_list t070_149815_iw3
+docker run --env-file env.secret -it sar-pipeline --scene S1A_IW_SLC__1SSH_20220101T124744_20220101T124814_041267_04E7A2_1DAD --output_crs 3031 --burst_id_list t070_149815_iw3 --skip_upload_to_s3
 ```
+
+Using the REMA 32 metre dem
+
+```bash
+docker run --env-file env.secret -it sar-pipeline --scene S1A_IW_SLC__1SSH_20220101T124744_20220101T124814_041267_04E7A2_1DAD --output_crs 3031 --burst_id_list t070_149815_iw3 --dem_type REMA_32 --skip_upload_to_s3
+```bash
 
 ### Australia (without linking RTC_S1_STATIC)
 
