@@ -13,14 +13,14 @@ s3_project_folder="experimental"
 collection="s1_rtc_c1"
 make_existing_products=false
 skip_upload_to_s3=false
+scene_data_source="ASF"
+orbit_data_source="ASF"
 ## -- WORKFLOW INPUTS TO LINK RTC_S1_STATIC in RTC_S1 metadata--
 # Assumes that a RTC_S1_STATIC products exist for all RTC_S1 bursts being processed
 link_static_layers=false
 linked_static_layers_s3_bucket="deant-data-public-dev"
 linked_static_layers_s3_project_folder="experimental"
 linked_static_layers_collection="s1_rtc_static_c1"
-scene_data_source="ASF"
-orbit_data_source="ASF"
 
 # Final product output paths follow the following structure
 # RTC_S1 -> s3_bucket/s3_project_folder/collection/burst_id/year/month/day/*files
