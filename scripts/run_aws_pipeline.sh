@@ -38,7 +38,7 @@ while [[ "$#" -gt 0 ]]; do
         --s3_project_folder) s3_project_folder="$2"; shift 2 ;;
         --collection) collection="$2"; shift 2 ;;
         --make_existing_products) make_existing_products=true; shift ;;
-        --skip_upload_to_s3) skip_upload_to_s3==true; shift ;;
+        --skip_upload_to_s3) skip_upload_to_s3=true; shift ;;
         --link_static_layers) link_static_layers=true; shift ;;
         --linked_static_layers_s3_bucket) linked_static_layers_s3_bucket="$2"; shift 2 ;;
         --linked_static_layers_collection) linked_static_layers_collection="$2"; shift 2 ;;
