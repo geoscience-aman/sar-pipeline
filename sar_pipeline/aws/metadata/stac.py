@@ -9,10 +9,15 @@ import requests
 import datetime
 import re
 import numpy as np
+import os
 
 import dem_handler
 import sar_pipeline
 from sar_pipeline.aws.metadata.h5 import H5Manager
+from sar_pipeline.aws.preparation.burst_utils import (
+    make_rtc_s1_s3_subpath,
+    make_rtc_s1_static_s3_subpath,
+)
 from sar_pipeline.utils.spatial import polygon_str_to_geojson, convert_bbox
 from sar_pipeline.aws.metadata.filetypes import (
     REQUIRED_ASSET_FILETYPES,
@@ -120,12 +125,22 @@ class BurstH5toStacManager:
         "make the s3 subfolder destination based on the product"
         if self.product == "RTC_S1":
             # include acquisition dates for S1_RTC
-            return f"{self.s3_project_folder}/{self.collection}/{self.burst_id}/{self.start_dt.year}/{self.start_dt.month}/{self.start_dt.day}"
-        if self.product == "RTC_S1_STATIC":
+            return make_rtc_s1_s3_subpath(
+                s3_project_folder=self.s3_project_folder,
+                collection=self.collection,
+                burst_id=self.burst_id,
+                year=self.start_dt.year,
+                month=self.start_dt.month,
+                day=self.start_dt.day,
+            )
+
+        elif self.product == "RTC_S1_STATIC":
             # static products are date independent
-            return f"{self.s3_project_folder}/{self.collection}/{self.burst_id}"
-        else:
-            raise ValueError()
+            return make_rtc_s1_static_s3_subpath(
+                s3_project_folder=self.s3_project_folder,
+                collection=self.collection,
+                burst_id=self.burst_id,
+            )
 
     def _extract_doi_link(self, text: str) -> str:
         """extracts the doi reference from a given string and converts
@@ -187,6 +202,9 @@ class BurstH5toStacManager:
 
     def add_properties_from_h5(self):
         """Map required properties from the .h5 file"""
+
+        # add odc specific fields
+        self.item.properties["odc:product"] = self.collection
 
         # add product stac extension properties
         self.item.properties["product:type"] = self.product
@@ -514,9 +532,11 @@ class BurstH5toStacManager:
         achieved by reading in the STAC metadata file associated with the
         static layers themselves"""
 
-        static_layer_url = self.h5.search_value("staticLayersDataAccess")
-        burst_static_layer_stac_url = (
-            f"{static_layer_url}/{self.burst_id}/metadata.json"
+        static_layer_root_url = self.h5.search_value("staticLayersDataAccess")
+        # remove the index string which is used for user visibility
+        static_layer_url = static_layer_root_url.replace("index.html?prefix=", "")
+        burst_static_layer_stac_url = os.path.join(
+            static_layer_url, self.burst_id, "metadata.json"
         )
 
         try:
@@ -535,7 +555,7 @@ class BurstH5toStacManager:
         self.item.add_link(
             pystac.Link(
                 rel="static-layers",
-                target=f"burst_static_layer_stac_url",
+                target=burst_static_layer_stac_url,
             )
         )
 

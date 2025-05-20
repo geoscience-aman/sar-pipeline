@@ -6,11 +6,15 @@ scene=""
 burst_ids=()
 resolution=20
 output_crs="UTM"
-dem="cop_glo30"
+dem_type="cop_glo30"
 product="RTC_S1"
 s3_bucket="deant-data-public-dev"
 s3_project_folder="experimental"
 collection="s1_rtc_c1"
+make_existing_products=false
+skip_upload_to_s3=false
+scene_data_source="ASF"
+orbit_data_source="ASF"
 ## -- WORKFLOW INPUTS TO LINK RTC_S1_STATIC in RTC_S1 metadata--
 # Assumes that a RTC_S1_STATIC products exist for all RTC_S1 bursts being processed
 link_static_layers=false
@@ -28,15 +32,19 @@ while [[ "$#" -gt 0 ]]; do
         --scene) scene="$2"; shift 2 ;;
         --resolution) resolution="$2"; shift 2 ;;
         --output_crs) output_crs="$2"; shift 2 ;;
-        --dem) dem="$2"; shift 2 ;;
+        --dem_type) dem_type="$2"; shift 2 ;;
         --product) product="$2"; shift 2 ;;
         --s3_bucket) s3_bucket="$2"; shift 2 ;;
         --s3_project_folder) s3_project_folder="$2"; shift 2 ;;
         --collection) collection="$2"; shift 2 ;;
+        --make_existing_products) make_existing_products=true; shift ;;
+        --skip_upload_to_s3) skip_upload_to_s3=true; shift ;;
         --link_static_layers) link_static_layers=true; shift ;;
         --linked_static_layers_s3_bucket) linked_static_layers_s3_bucket="$2"; shift 2 ;;
         --linked_static_layers_collection) linked_static_layers_collection="$2"; shift 2 ;;
         --linked_static_layers_s3_project_folder) linked_static_layers_s3_project_folder="$2"; shift 2 ;;
+        --scene_data_source) scene_data_source="$2"; shift 2 ;;
+        --orbit_data_source) orbit_data_source="$2"; shift 2 ;;
         --burst_id_list)
             shift
             if [[ $# -eq 1 && -f "$1" ]]; then
@@ -92,11 +100,15 @@ echo scene : "$scene"
 echo burst_ids : ${burst_ids[*]}
 echo resolution : "$resolution"
 echo output_crs : "$epsg_code_msg"
-echo dem : "$dem"
+echo dem_type : "$dem_type"
 echo product : "$product"
 echo s3_bucket : "$s3_bucket"
 echo s3_project_folder : "$s3_project_folder"
 echo collection : "$collection"
+echo make_existing_products : "$make_existing_products"
+echo skip_upload_to_s3 : "$skip_upload_to_s3"
+echo scene_data_source : "$scene_data_source"
+echo orbit_data_source : "$orbit_data_source"
 
 # warn the user about linking static layers
 if [[ "$link_static_layers" = true && "$product" = "RTC_S1" ]]; then
@@ -112,8 +124,8 @@ fi
 
 # set process folders for the container
 download_folder="/home/rtc_user/working/downloads"
-out_folder="/home/rtc_user/working/results/$collection/$scene"
-scratch_folder="/home/rtc_user/working/scratch/$collection/$scene"
+out_folder="/home/rtc_user/working/results/$s3_project_folder/$collection/$scene"
+scratch_folder="/home/rtc_user/working/scratch/$s3_project_folder/$collection/$scene"
 
 echo ""
 echo The container will use these paths for processing:
@@ -140,14 +152,24 @@ cmd=(
     --scene "$scene" \
     --resolution "$resolution" \
     --output-crs "$output_crs" \
-    --dem "$dem" \
+    --dem-type "$dem_type" \
     --product "$product" \
+    --s3-bucket "$s3_bucket" \
+    --s3-project-folder "$s3_project_folder" \
+    --collection "$collection" \
     --download-folder "$download_folder" \
     --scratch-folder "$scratch_folder" \
     --out-folder "$out_folder" \
-    --run-config-save-path "$RUN_CONFIG_PATH"
+    --run-config-save-path "$RUN_CONFIG_PATH" \
+    --scene-data-source "$scene_data_source" \
+    --orbit-data-source "$orbit_data_source" \
 )
 
+if [ "$make_existing_products" = true ] ; then
+    # make the product even if it already exists
+    # WARNING - this may result in duplicates
+    cmd+=( --make-existing-products )
+fi
 if [ "$link_static_layers" = true ] ; then
     # Static layers ARE being linked in the stac metadata
     # A url to the RTC_S1_STATIC product will be added to the RUN_CONFIG
@@ -161,14 +183,21 @@ fi
 
 # Conditionally add --burst_id_list only if burst_ids is non-empty
 if [[ ${#burst_ids[@]} -gt 0 ]]; then
-    cmd+=(--burst_id_list "${burst_ids[@]}")
+    cmd+=(--burst_id_list "${burst_ids[*]}")
 fi
 
 # Execute the command
-"${cmd[@]}" || { 
+"${cmd[@]}"
+exit_code=$?
+
+if [ $exit_code -eq 100 ]; then
+    echo "Early exit: products already exist for all bursts."
+    exit 0  # Graceful exit
+fi
+if [ $exit_code -ne 0 ]; then
     echo "Process failed: get-data-for-scene-and-make-run-config"
     exit 1
-}
+fi
 
 ## -- RUN THE WORKFLOW TO PRODUCE RTC_S1 or RTC_S1_STATIC --
 
@@ -194,6 +223,9 @@ cmd=(
     --s3-project-folder "$s3_project_folder" 
 )
 
+if [ "$skip_upload_to_s3" = true ] ; then
+    cmd+=( --skip-upload-to-s3)
+fi
 if [ "$link_static_layers" = true ] ; then
     # Static layers are to be linked to RTC_S1 in the stac metadata
     # The url link to static layers is read in from results .h5 file

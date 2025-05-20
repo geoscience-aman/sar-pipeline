@@ -71,5 +71,5 @@ RUN chmod +x /home/rtc_user/scripts/run_aws_pipeline.sh
 
 WORKDIR /home/rtc_user/working
 
-# ENTRYPOINT ["conda", "run", "--no-capture-output", "-n", "sar-pipeline"]
 ENTRYPOINT ["/home/rtc_user/scripts/run_aws_pipeline.sh"]
+CMD []
