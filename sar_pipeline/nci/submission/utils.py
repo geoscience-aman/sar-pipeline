@@ -17,6 +17,8 @@ def populate_pbs_template(
 ):
     pbs_template = SUBMISSION_TEMPLATE.read_text()
 
+    short_job_name = f"{jobname[0:6]}_{jobname[-4:]}"
+
     replace_dict = {
         "<NCPU>": ncpu,
         "<MEM>": mem,
@@ -26,6 +28,7 @@ def populate_pbs_template(
         "<STORAGE>": STORAGE,
         "<LOGDIR>": log_dir,
         "<JOBNAME>": jobname,
+        "<SHORTJOBNAME>": short_job_name,
     }
 
     for key, value in replace_dict.items():

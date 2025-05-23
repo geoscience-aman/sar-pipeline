@@ -338,7 +338,7 @@ def run_pyrosar_gamma_workflow(
     # If target CRS is 3031, convert geocoded data layers before proceeding
     if target_crs == "3031":
         click.echo("Performing reprojection to EPSG:3031")
-        files_to_reproject = list(processed_scene_directory.glob("*_geo.tif"))
+        files_to_reproject = list(processed_scene_directory.glob("*_geo*.tif"))
         for file in files_to_reproject:
             output_file = file.parent / (file.stem + "_3031" + file.suffix)
 
@@ -354,7 +354,7 @@ def run_pyrosar_gamma_workflow(
     files_to_update = list(processed_scene_directory.glob("*_geo*.tif"))
 
     for file in files_to_update:
-        click.echo("Setting nodata to nan and adding overviews")
+        click.echo("{file}: Setting nodata to nan and adding overviews")
         # update nodata - overwrite original file
         gdal_update_nodata(file, file, "nan")
 
