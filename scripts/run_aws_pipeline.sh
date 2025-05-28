@@ -3,7 +3,7 @@
 # See docs/workflows/aws.md for instructions and argument descriptions
 ## -- WORKFLOW INPUTS FOR PRODUCT CREATION -> RTC_S1 or RTC_S1_STATIC --
 scene=""
-burst_ids=()
+burst_id_list=()
 resolution=20
 output_crs="UTM"
 dem_type="cop_glo30"
@@ -48,11 +48,11 @@ while [[ "$#" -gt 0 ]]; do
         --burst_id_list)
             shift
             if [[ $# -eq 1 && -f "$1" ]]; then
-                burst_ids=($(cat "$1"))
+                burst_id_list=($(cat "$1"))
                 shift
             else
                 while [[ $# -gt 0 && ! $1 =~ ^-- ]]; do
-                    burst_ids+=("$1")
+                    burst_id_list+=("$1")
                     shift
                 done
             fi
@@ -97,7 +97,7 @@ fi
 echo ""
 echo The input variables are:
 echo scene : "$scene"
-echo burst_ids : ${burst_ids[*]}
+echo burst_id_list : ${burst_id_list[*]}
 echo resolution : "$resolution"
 echo output_crs : "$epsg_code_msg"
 echo dem_type : "$dem_type"
@@ -181,9 +181,9 @@ if [ "$link_static_layers" = true ] ; then
     )
 fi
 
-# Conditionally add --burst_id_list only if burst_ids is non-empty
-if [[ ${#burst_ids[@]} -gt 0 ]]; then
-    cmd+=(--burst_id_list "${burst_ids[*]}")
+# Conditionally add --burst_id_list only if burst_id_list is non-empty
+if [[ ${#burst_id_list[@]} -gt 0 ]]; then
+    cmd+=(--burst-id-list "${burst_id_list[*]}")
 fi
 
 # Execute the command

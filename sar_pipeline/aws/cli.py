@@ -3,7 +3,7 @@ import logging
 from pathlib import Path
 import shutil
 import sys
-from shapely.geometry import Polygon
+from shapely.geometry import Polygon, shape
 from s1reader import s1_info
 
 from sar_pipeline.aws.preparation.scenes import (
@@ -38,7 +38,7 @@ logger = logging.getLogger(__name__)
     help="scene id. E.g. S1A_IW_SLC__1SSH_20220101T124744_20220101T124814_041267_04E7A2_1DAD",
 )
 @click.option(
-    "--burst_id_list",
+    "--burst-id-list",
     required=False,
     type=str,
     help="List of burst IDs separated by space. e.g. t070_149815_iw2 t070_149815_iw3",
@@ -212,12 +212,12 @@ def get_data_for_scene_and_make_run_config(
     scene_folder = download_folder / "scenes"
     if scene_data_source == "ASF":
         SCENE_PATH, asf_scene_metadata = download_slc_from_asf(scene, scene_folder)
-        scene_polygon = Polygon(asf_scene_metadata.geometry["coordinates"][0])
+        scene_polygon = shape(asf_scene_metadata.geometry)
         polarisation_list = asf_scene_metadata.properties["polarization"].split("+")
         input_scene_url = asf_scene_metadata.properties["url"]
     if scene_data_source == "CDSE":
         SCENE_PATH, cdse_scene_metadata = download_slc_from_cdse(scene, scene_folder)
-        scene_polygon = Polygon(cdse_scene_metadata["geometry"]["coordinates"][0])
+        scene_polygon = shape(cdse_scene_metadata["geometry"])
         polarisation_list = cdse_scene_metadata["properties"]["polarisation"].split("&")
         input_scene_url = cdse_scene_metadata["properties"]["services"]["download"][
             "url"
@@ -284,6 +284,7 @@ def get_data_for_scene_and_make_run_config(
             )
 
     logger.info(f"Processing {len(burst_id_list)} bursts for scene : {burst_id_list}")
+    slc_bursts_info = [b for b in slc_bursts_info if str(b.burst_id) in burst_id_list]
 
     # check the static layers exist
     # to link the RTC_S1_STATIC layers to RTC_S1, they must already exist
