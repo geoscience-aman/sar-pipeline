@@ -183,7 +183,7 @@ def check_burst_products_exists_in_s3(
     existing_s3_paths = []
 
     for burst in slc_bursts_info:
-        if product == "RTC_ST_STATIC":
+        if product == "RTC_S1_STATIC":
             s3_product_subpath = make_rtc_s1_static_s3_subpath(
                 s3_project_folder=s3_project_folder,
                 collection=collection,
