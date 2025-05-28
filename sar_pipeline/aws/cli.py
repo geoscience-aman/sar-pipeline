@@ -3,7 +3,7 @@ import logging
 from pathlib import Path
 import shutil
 import sys
-from shapely.geometry import Polygon, shape
+from shapely.geometry import shape
 from s1reader import s1_info
 
 from sar_pipeline.aws.preparation.scenes import (
