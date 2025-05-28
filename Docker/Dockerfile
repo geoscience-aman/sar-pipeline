@@ -4,8 +4,8 @@
 FROM oraclelinux:9
 
 LABEL author="Geoscience Australia" \
-description="ISCE3/RTC Pipeline Version 0.1" \
-version="0.1"
+description="ISCE3/RTC Pipeline Version 0.2.1_beta" \
+version="0.2.2_beta"
 
 RUN yum -y update &&\
 yum -y install curl &&\
@@ -31,12 +31,11 @@ ENV PATH=${CONDA_PREFIX}/bin:${PATH}
 RUN ${CONDA_PREFIX}/bin/conda init bash
 
 # Download the opera-adt/RTC code - UPDATE VERSION AND TAG HERE IF NEEDED
-ARG RTC_VERSION=RTC-1.0.4-amfix
-ARG RTC_VERSION_TAG=v1.0.4-amfix
-# Clone the repo and checkout the specific commit
-RUN git clone https://github.com/opera-adt/RTC /home/rtc_user/OPERA/${RTC_VERSION} && \
-    cd /home/rtc_user/OPERA/${RTC_VERSION} && \
-    git checkout c5cc7403af16bb67fd14f43bf2aec15c6a422297 
+ARG RTC_VERSION=RTC-1.0.4
+ARG RTC_VERSION_TAG=v1.0.4
+RUN  curl -sSL https://github.com/opera-adt/RTC/archive/refs/tags/$RTC_VERSION_TAG.tar.gz -o $RTC_VERSION.tar.gz &&\
+tar -xvf $RTC_VERSION.tar.gz -C OPERA &&\
+rm $RTC_VERSION.tar.gz
 
 # Create RTC CONDA environment
 RUN conda create --name "RTC" --file /home/rtc_user/OPERA/$RTC_VERSION/Docker/lockfile.lock &&  conda clean -afy
