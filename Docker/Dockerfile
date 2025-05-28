@@ -4,7 +4,7 @@
 FROM oraclelinux:9
 
 LABEL author="Geoscience Australia" \
-description="ISCE3/RTC Pipeline Version 0.2.1_beta" \
+description="ISCE3/RTC Pipeline Version 0.2.2_beta" \
 version="0.2.2_beta"
 
 RUN yum -y update &&\
