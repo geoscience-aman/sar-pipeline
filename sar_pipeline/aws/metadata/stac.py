@@ -34,13 +34,14 @@ logger = logging.getLogger(__name__)
 
 
 class BurstH5toStacManager:
-    """utility class to convert burst .h5 metadata to a STAC data item data"""
+    """utility class to convert burst .h5 metadata to a STAC item data"""
 
     def __init__(
         self,
         h5_filepath: Path,
         product: str,
         collection: str,
+        collection_number: int,
         s3_bucket: str,
         s3_project_folder: str,
         s3_region: str = "ap-southeast-2",
@@ -54,6 +55,8 @@ class BurstH5toStacManager:
             The product being made. RTC_S1 or RTC_S1_STATIC
         collection : str
             The collection the product belongs to. e.g. s1_rtc_c1
+        collection_number: int
+            The collection number associated with the product
         s3_bucket : str
             The S3 bucket where data will be uploaded
         s3_project_folder : str
@@ -67,7 +70,10 @@ class BurstH5toStacManager:
         self.id = self.h5_filepath.stem
         self.product = self._check_valid_product(product)
         self.burst_id = self.h5.search_value("burstID")
+        self.polarisations = self.h5.search_value("listOfPolarizations")
         self.collection = collection
+        self.collection_number = collection_number
+        self.odc_product = self._get_odc_product()
         self.stac_extensions = [
             "https://stac-extensions.github.io/product/v0.1.0/schema.json",
             "https://stac-extensions.github.io/sar/v1.1.0/schema.json",
@@ -94,7 +100,9 @@ class BurstH5toStacManager:
         self.processed_dt = isoparse(
             self.h5.search_value("identification/processingDateTime")
         )
-        self.projection = self.h5.search_value("data/projection")
+        self.projection_epsg = self.h5.search_value(
+            "data/projection"
+        )  # code, e.g. 4326, 3031
         if self.product == "RTC_S1":
             self.geometry_4326 = polygon_str_to_geojson(
                 self.h5.search_value("boundingPolygon")
@@ -104,13 +112,12 @@ class BurstH5toStacManager:
             # 4326 needs to be converted from native coordinates
             self.bbox_4326 = convert_bbox(
                 self.h5.search_value("boundingBox"),
-                src_crs=self.projection,
+                src_crs=self.projection_epsg,
                 trg_crs=4326,
             )
             # geometry is not included, set this to be bbox
             self.geometry_4326 = self.bbox_4326
 
-        self.burst_id = self.h5.search_value("burstID")
         self.burst_s3_subfolder = self._make_s3_subfolder()
         self.bucket_href = f"https://{self.s3_bucket}.s3.{self.s3_region}.amazonaws.com"
         self.base_href = f"{self.bucket_href}/{self.burst_s3_subfolder}"
@@ -120,6 +127,23 @@ class BurstH5toStacManager:
         if product not in ["RTC_S1", "RTC_S1_STATIC"]:
             raise ValueError("Invalid product")
         return product
+
+    def _get_odc_product(self):
+        """set the odc:product value. WARNING this must align with
+        the DEA product name at indexing into the datacube.
+        These are hard-coded and set by the provided `collection_number`.
+        """
+        if self.product == "RTC_S1":
+            if all([pol in self.polarisations for pol in ["VV", "VH"]]):
+                return f"ga_s1_iw_vv_vh_c{self.collection_number}"
+            elif all([pol in self.polarisations for pol in ["HH", "HV"]]):
+                return f"ga_s1_iw_hh_hv_c{self.collection_number}"
+            elif self.polarisations == ["VV"]:
+                return f"ga_s1_iw_vv_c{self.collection_number}"
+            elif self.polarisations == ["HH"]:
+                return f"ga_s1_iw_hh_c{self.collection_number}"
+        elif self.product == "RTC_S1_STATIC":
+            return f"ga_s1_iw_static_c{self.collection_number}"
 
     def _make_s3_subfolder(self):
         "make the s3 subfolder destination based on the product"
@@ -184,7 +208,7 @@ class BurstH5toStacManager:
             "gsd": self.h5.search_value("xCoordinateSpacing"),
             "constellation": "Sentinel-1",
             "platform": self.h5.search_value("platform"),
-            "instruments": self.h5.search_value("instrumentName"),
+            "instruments": [self.h5.search_value("instrumentName")],
             "created": self.h5.search_value("identification/processingDateTime"),
         }
 
@@ -204,10 +228,15 @@ class BurstH5toStacManager:
         """Map required properties from the .h5 file"""
 
         # add odc specific fields
-        self.item.properties["odc:product"] = self.collection
+        self.item.properties["odc:product"] = (
+            self.odc_product
+        )  # this needs to  dynamic based on the pol files and match odc product
+        self.item.properties["odc:product_family"] = "sar_ard"
+        self.item.properties["odc:region_code"] = self.burst_id
 
         # add product stac extension properties
         self.item.properties["product:type"] = self.product
+        self.item.properties["product:timeliness"] = "TODO"
         self.item.properties["product:timeliness_category"] = (
             self._get_product_timeliness_category(self.start_dt, self.processed_dt)
         )
@@ -221,7 +250,7 @@ class BurstH5toStacManager:
             self.item.properties["ceosard:specification_version"] = "1.1"
 
         # add projection (proj) stac extension properties
-        self.item.properties["proj:epsg"] = self.projection
+        self.item.properties["proj:code"] = f"EPSG:{self.projection_epsg}"
         self.item.properties["proj:bbox"] = self.h5.search_value("boundingBox")
 
         # add the sar stac extension properties
@@ -230,9 +259,7 @@ class BurstH5toStacManager:
             self.item.properties["sar:center_frequency"] = self.h5.search_value(
                 "centerFrequency"
             )
-            self.item.properties["sar:polarizations"] = self.h5.search_value(
-                "listOfPolarizations"
-            )
+            self.item.properties["sar:polarizations"] = self.polarisations
         self.item.properties["sar:observation_direction"] = self.h5.search_value(
             "lookDirection"
         )
@@ -252,12 +279,14 @@ class BurstH5toStacManager:
         self.item.properties["sat:absolute_orbit"] = self.h5.search_value(
             "absoluteOrbitNumber"
         )
-        self.item.properties["sat:relative_orbit"] = "trackNumber"
+        self.item.properties["sat:relative_orbit"] = self.h5.search_value("trackNumber")
         self.item.properties["sat:orbit_cycle"] = "12"
         self.item.properties["sat:osv"] = self.h5.search_value(
             "orbitFiles"
         )  # Link to a file containing the orbit state vectors.
-        self.item.properties["sat:orbit_state_vectors"] = ""  # TODO map this from .h5
+        self.item.properties["sat:orbit_state_vectors"] = (
+            "TODO"  # TODO map this from .h5
+        )
 
         # add sentinel-1 stac extension properties - https://github.com/stac-extensions/sentinel-1
         self.item.properties["s1:orbit_source"] = self.h5.search_value("orbitType")
@@ -283,6 +312,9 @@ class BurstH5toStacManager:
 
         # proposed nrb stac extension properties
         self.item.properties["nrb:source_id"] = self.h5.search_value("l1SlcGranules")
+        self.item.properties["nrb:scene_id"] = self.h5.search_value("l1SlcGranules")[
+            0
+        ].replace(".SAFE", "")
         self.item.properties["nrb:pixel_spacing_x"] = abs(
             self.h5.search_value("xCoordinateSpacing")
         )
@@ -458,7 +490,7 @@ class BurstH5toStacManager:
         # remove polarizations we don't have from the required products
         # e.g. don't try add HH if it did not exist in original source data
         if self.product == "RTC_S1":
-            pols = self.item.properties["sar:polarizations"]
+            pols = self.polarisations
         elif self.product == "RTC_S1_STATIC":
             pols = []  # no pol for static products, only auxiliary files
         IGNORE_ASSETS = [f"_{p}.tif" for p in ["HH", "HV", "VV", "VH"] if p not in pols]
@@ -492,7 +524,7 @@ class BurstH5toStacManager:
                     extra_fields = {
                         "proj:shape": r.shape,
                         "proj:transform": list(r.transform),
-                        "proj:epsg": r.crs.to_epsg(),
+                        "proj:code": str(r.crs),
                         "raster:data_type": r.dtypes[0],
                         "raster:sampling": r.tags().get("AREA_OR_POINT", ""),
                         "raster:nodata": (

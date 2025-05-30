@@ -457,6 +457,12 @@ def get_data_for_scene_and_make_run_config(
     help="The collection the products belong to. e.g. s1_rtc_c1",
 )
 @click.option(
+    "--collection-number",
+    required=True,
+    type=int,
+    help="The collection number associated with the product. e.g. 1",
+)
+@click.option(
     "--s3-bucket", required=True, type=str, help="The bucket to upload the files"
 )
 @click.option(
@@ -488,6 +494,7 @@ def make_rtc_opera_stac_and_upload_bursts(
     run_config_path,
     product,
     collection,
+    collection_number,
     s3_bucket,
     s3_project_folder,
     skip_upload_to_s3,
@@ -520,6 +527,7 @@ def make_rtc_opera_stac_and_upload_bursts(
             h5_filepath=burst_h5_filepath,
             product=product,
             collection=collection,
+            collection_number=collection_number,
             s3_bucket=s3_bucket,
             s3_project_folder=s3_project_folder,
         )
