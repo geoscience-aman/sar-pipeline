@@ -240,7 +240,6 @@ def get_data_for_scene_and_make_run_config(
     logger.info(f"Scene polarisations : {polarisation_list}")
     for pol in polarisation_list:
         slc_bursts_info += s1_info.get_bursts(SCENE_PATH, pol=pol.lower())
-        frame_bounds = s1_info.get_frame_bounds(SCENE_PATH)
         all_slc_burst_id_list = [str(b.burst_id) for b in slc_bursts_info]
         all_slc_burst_id_list = list(set(all_slc_burst_id_list))
 
