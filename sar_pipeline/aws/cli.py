@@ -205,10 +205,12 @@ def get_data_for_scene_and_make_run_config(
         raise ValueError("product must be S1_RTC or S1_RTC_STATIC")
 
     # ensure the collection ends with cX, where X is a positive integer
-    colletion_number = re.search(r'c(\d+)$', collection)
+    colletion_number = re.search(r"c(\d+)$", collection)
     if not colletion_number:
-        raise ValueError(f'Invalid collection name. The collection MUST end in cX where X'
-        ' is an integer associated with the collection. E.g. rtc_s1_c1.')
+        raise ValueError(
+            f"Invalid collection name. The collection MUST end in cX where X"
+            " is an integer associated with the collection. E.g. rtc_s1_c1."
+        )
 
     # subfolders for downloads
     orbit_folder = download_folder / "orbits"

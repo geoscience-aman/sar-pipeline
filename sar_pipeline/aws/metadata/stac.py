@@ -129,10 +129,12 @@ class BurstH5toStacManager:
 
     def _get_collection_number(self):
         # ensure the collection ends with cX, where X is a positive integer
-        colletion_number = re.search(r'c(\d+)$', self.collection)
+        colletion_number = re.search(r"c(\d+)$", self.collection)
         if not colletion_number:
-            raise ValueError(f'Invalid collection name. The collection MUST end in cX where X'
-            ' is an integer associated with the collection. E.g. rtc_s1_c1.')
+            raise ValueError(
+                f"Invalid collection name. The collection MUST end in cX where X"
+                " is an integer associated with the collection. E.g. rtc_s1_c1."
+            )
         else:
             # return the collection number as integer, rtc_s1_c1 -> 1
             return int(colletion_number.group(1))
