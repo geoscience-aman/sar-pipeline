@@ -236,10 +236,11 @@ class BurstH5toStacManager:
 
         # add product stac extension properties
         self.item.properties["product:type"] = self.product
-        self.item.properties["product:timeliness"] = "TODO"
-        self.item.properties["product:timeliness_category"] = (
-            self._get_product_timeliness_category(self.start_dt, self.processed_dt)
-        )
+        # remove timeliness as not required. May re-add if approach is determined.
+        # self.item.properties["product:timeliness"] = "TODO"
+        # self.item.properties["product:timeliness_category"] = (
+        #     self._get_product_timeliness_category(self.start_dt, self.processed_dt)
+        # )
 
         # add ceos-ard stac extension properties
         if self.product == "RTC_S1":
