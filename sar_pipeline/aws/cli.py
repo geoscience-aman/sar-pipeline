@@ -5,6 +5,7 @@ import shutil
 import sys
 from shapely.geometry import shape
 from s1reader import s1_info
+import re
 
 from sar_pipeline.aws.preparation.scenes import (
     download_slc_from_asf,
@@ -202,6 +203,12 @@ def get_data_for_scene_and_make_run_config(
         RTC_RUN_CONFIG = RTCConfigManager(base_config="S1_RTC_STATIC.yaml")
     else:
         raise ValueError("product must be S1_RTC or S1_RTC_STATIC")
+
+    # ensure the collection ends with cX, where X is a positive integer
+    colletion_number = re.search(r'c(\d+)$', collection)
+    if not colletion_number:
+        raise ValueError(f'Invalid collection name. The collection MUST end in cX where X'
+        ' is an integer associated with the collection. E.g. rtc_s1_c1.')
 
     # subfolders for downloads
     orbit_folder = download_folder / "orbits"
@@ -457,13 +464,6 @@ def get_data_for_scene_and_make_run_config(
     help="The collection the products belong to. e.g. s1_rtc_c1",
 )
 @click.option(
-    "--collection-number",
-    required=True,
-    type=int,
-    help="The collection number associated with the product. "
-    "used to set STAC values for the open data cube. e.g. 1",
-)
-@click.option(
     "--s3-bucket", required=True, type=str, help="The bucket to upload the files"
 )
 @click.option(
@@ -495,7 +495,6 @@ def make_rtc_opera_stac_and_upload_bursts(
     run_config_path,
     product,
     collection,
-    collection_number,
     s3_bucket,
     s3_project_folder,
     skip_upload_to_s3,
@@ -528,7 +527,6 @@ def make_rtc_opera_stac_and_upload_bursts(
             h5_filepath=burst_h5_filepath,
             product=product,
             collection=collection,
-            collection_number=collection_number,
             s3_bucket=s3_bucket,
             s3_project_folder=s3_project_folder,
         )

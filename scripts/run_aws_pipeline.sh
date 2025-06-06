@@ -11,7 +11,6 @@ product="RTC_S1"
 s3_bucket="deant-data-public-dev"
 s3_project_folder="experimental"
 collection="s1_rtc_c1"
-collection_number=1
 make_existing_products=false
 skip_upload_to_s3=false
 scene_data_source="ASF"
@@ -38,7 +37,6 @@ while [[ "$#" -gt 0 ]]; do
         --s3_bucket) s3_bucket="$2"; shift 2 ;;
         --s3_project_folder) s3_project_folder="$2"; shift 2 ;;
         --collection) collection="$2"; shift 2 ;;
-        --collection_number) collection_number="$2"; shift 2 ;;
         --make_existing_products) make_existing_products=true; shift ;;
         --skip_upload_to_s3) skip_upload_to_s3=true; shift ;;
         --link_static_layers) link_static_layers=true; shift ;;
@@ -107,7 +105,6 @@ echo product : "$product"
 echo s3_bucket : "$s3_bucket"
 echo s3_project_folder : "$s3_project_folder"
 echo collection : "$collection"
-echo collection_number : "$collection_number"
 echo make_existing_products : "$make_existing_products"
 echo skip_upload_to_s3 : "$skip_upload_to_s3"
 echo scene_data_source : "$scene_data_source"
@@ -222,7 +219,6 @@ cmd=(
     --run-config-path "$RUN_CONFIG_PATH" \
     --product "$product" \
     --collection "$collection" \
-    --collection-number "$collection_number" \
     --s3-bucket "$s3_bucket" \
     --s3-project-folder "$s3_project_folder" 
 )

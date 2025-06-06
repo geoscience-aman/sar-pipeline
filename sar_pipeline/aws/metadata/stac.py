@@ -41,7 +41,6 @@ class BurstH5toStacManager:
         h5_filepath: Path,
         product: str,
         collection: str,
-        collection_number: int,
         s3_bucket: str,
         s3_project_folder: str,
         s3_region: str = "ap-southeast-2",
@@ -72,7 +71,7 @@ class BurstH5toStacManager:
         self.burst_id = self.h5.search_value("burstID")
         self.polarisations = self.h5.search_value("listOfPolarizations")
         self.collection = collection
-        self.collection_number = collection_number
+        self.collection_number = self._get_collection_number()
         self.odc_product = self._get_odc_product()
         self.stac_extensions = [
             "https://stac-extensions.github.io/product/v0.1.0/schema.json",
@@ -127,6 +126,16 @@ class BurstH5toStacManager:
         if product not in ["RTC_S1", "RTC_S1_STATIC"]:
             raise ValueError("Invalid product")
         return product
+
+    def _get_collection_number(self):
+        # ensure the collection ends with cX, where X is a positive integer
+        colletion_number = re.search(r'c(\d+)$', self.collection)
+        if not colletion_number:
+            raise ValueError(f'Invalid collection name. The collection MUST end in cX where X'
+            ' is an integer associated with the collection. E.g. rtc_s1_c1.')
+        else:
+            # return the collection number as integer, rtc_s1_c1 -> 1
+            return int(colletion_number.group(1))
 
     def _get_odc_product(self):
         """set the odc:product value. WARNING this must align with
