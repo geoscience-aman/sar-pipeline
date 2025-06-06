@@ -204,13 +204,13 @@ fi
 
 ## -- RUN THE WORKFLOW TO PRODUCE RTC_S1 or RTC_S1_STATIC --
 
-# conda activate RTC
-# rtc_s1.py $RUN_CONFIG_PATH
+conda activate RTC
+rtc_s1.py $RUN_CONFIG_PATH
 
-# if [ $? -ne 0 ]; then
-#     echo "Process failed: rtc_s1.py $RUN_CONFIG_PATH"
-#     exit 1
-# fi
+if [ $? -ne 0 ]; then
+    echo "Process failed: rtc_s1.py $RUN_CONFIG_PATH"
+    exit 1
+fi
 
 ## -- MAKE THE METADATA FOR PRODUCTS AND UPLOAD TO S3 --
 
