@@ -346,5 +346,5 @@ docker run --env-file env.secret -v $(pwd)/scripts:/home/rtc_user/scripts -v /da
 ```
 
 ```bash
-docker run --env-file env.secret -v $(pwd)/scripts:/home/rtc_user/scripts -v /data/working:/home/rtc_user/working -it sar-pipeline:rema --scene S1A_IW_SLC__1SSH_20220101T124744_20220101T124814_041267_04E7A2_1DAD --output_crs 3031 --burst_id_list t070_149815_iw3 t070_149821_iw1 --s3_project_folder experimental/REMA_32 --dem_type REMA_32 --skip_upload_to_s3 --make_existing_products
+docker run --env-file env.secret -v $(pwd)/scripts:/home/rtc_user/scripts -v /data/working:/home/rtc_user/working -it sar-pipeline --scene S1A_IW_SLC__1SSH_20220101T124744_20220101T124814_041267_04E7A2_1DAD --output_crs 3031 --burst_id_list t070_149815_iw3 t070_149821_iw1 --s3_project_folder experimental/REMA_32 --dem_type REMA_32 --skip_upload_to_s3 --make_existing_products
 ```
