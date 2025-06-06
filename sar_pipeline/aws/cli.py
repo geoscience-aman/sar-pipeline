@@ -460,7 +460,8 @@ def get_data_for_scene_and_make_run_config(
     "--collection-number",
     required=True,
     type=int,
-    help="The collection number associated with the product. e.g. 1",
+    help="The collection number associated with the product. "
+    "used to set STAC values for the open data cube. e.g. 1",
 )
 @click.option(
     "--s3-bucket", required=True, type=str, help="The bucket to upload the files"
