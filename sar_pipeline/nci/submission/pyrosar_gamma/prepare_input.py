@@ -11,6 +11,9 @@ def get_orbit_and_dem(
     dem_output_dir: Path,
     orbit_dir: Path = Path("/g/data/fj7/Copernicus/Sentinel-1/"),
     orbit_type: str | None = "POE",
+    dem_dir: Path = Path(
+        "/g/data/v10/eoancillarydata-2/elevation/copernicus_30m_world/"
+    ),
 ) -> tuple[Path, Path]:
     """For a given Sentinel-1 scene, find the relevant orbit path and DEM path.
     The DEM will be created if no DEM path is found.
@@ -20,8 +23,14 @@ def get_orbit_and_dem(
     scene_file : Path
         Full path to the scene
         e.g. "path/to/scene/scene_id.zip"
+    orbit_dir : Path, optional
+        Path to orbit files
+        Set to default for NCI: /g/data/fj7/Copernicus/Sentinel-1/
     orbit_type : str, optional
         The orbit type to get. Any of "POE", "RES" or None, by default "POE"
+            orbit_dir : Path, optional
+    Path to dem files
+        Set to default for NCI: /g/data/v10/eoancillarydata-2/elevation/copernicus_30m_world/
 
     Returns
     -------
@@ -52,6 +61,6 @@ def get_orbit_and_dem(
     )
 
     # Build DEM
-    dem_file = get_dem_nci(scene_file, scene_bounds, dem_output_dir)
+    dem_file = get_dem_nci(scene_file, scene_bounds, dem_output_dir, dem_dir)
 
     return (orbit_file, dem_file)
