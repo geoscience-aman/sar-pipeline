@@ -5,6 +5,7 @@ import shutil
 import sys
 from shapely.geometry import shape
 from s1reader import s1_info
+import re
 
 from sar_pipeline.aws.preparation.scenes import (
     download_slc_from_asf,
@@ -24,7 +25,10 @@ from sar_pipeline.utils.general import log_timing
 
 from dem_handler.dem.cop_glo30 import get_cop30_dem_for_bounds
 from dem_handler.dem.rema import get_rema_dem_for_bounds
-
+from dem_handler.utils.spatial import (
+    check_s1_bounds_cross_antimeridian,
+    get_correct_bounds_from_shape_at_antimeridian,
+)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -83,7 +87,8 @@ logger = logging.getLogger(__name__)
     "--collection",
     required=True,
     type=str,
-    help="collection associated with product. e.g. s1_rtc_c1",
+    help="collection associated with product. e.g. s1_rtc_c1. Must end in 'cX' where X is an "
+    "integer number referring to the collection.",
 )
 @click.option(
     "--download-folder",
@@ -200,16 +205,32 @@ def get_data_for_scene_and_make_run_config(
     else:
         raise ValueError("product must be S1_RTC or S1_RTC_STATIC")
 
+    # ensure the collection ends with cX, where X is a positive integer
+    colletion_number = re.search(r"c(\d+)$", collection)
+    if not colletion_number:
+        raise ValueError(
+            f"Invalid collection name. The collection MUST end in cX where X"
+            " is an integer associated with the collection. E.g. rtc_s1_c1."
+        )
+
+    # subfolders for downloads
+    orbit_folder = download_folder / "orbits"
+    scene_folder = download_folder / "scenes"
+    dem_folder = download_folder / "dem" / dem_type
+
     if make_folders:
         logger.info(f"Making output folders if not existing")
         download_folder.mkdir(parents=True, exist_ok=True)
+        orbit_folder.mkdir(parents=True, exist_ok=True)
+        scene_folder.mkdir(parents=True, exist_ok=True)
+        dem_folder.mkdir(parents=True, exist_ok=True)
         out_folder.mkdir(parents=True, exist_ok=True)
         scratch_folder.mkdir(parents=True, exist_ok=True)
         run_config_save_path.parent.mkdir(parents=True, exist_ok=True)
 
     # download the SLC and get scene metadata from asf
     logger.info(f"Downloading SLC for scene : {scene}")
-    scene_folder = download_folder / "scenes"
+
     if scene_data_source == "ASF":
         SCENE_PATH, asf_scene_metadata = download_slc_from_asf(scene, scene_folder)
         scene_polygon = shape(asf_scene_metadata.geometry)
@@ -231,6 +252,7 @@ def get_data_for_scene_and_make_run_config(
         slc_bursts_info += s1_info.get_bursts(SCENE_PATH, pol=pol.lower())
         all_slc_burst_id_list = [str(b.burst_id) for b in slc_bursts_info]
         all_slc_burst_id_list = list(set(all_slc_burst_id_list))
+
     logger.info(f"{len(all_slc_burst_id_list)} burst ids found for scene in the slc")
     # split the burst_id list
     if burst_id_list:
@@ -300,7 +322,6 @@ def get_data_for_scene_and_make_run_config(
 
     # # download the orbits
     logger.info(f"Downloading Orbits for scene : {scene}")
-    orbit_folder = download_folder / "orbits"
     ORBIT_PATHS = download_orbits(
         sentinel_file=scene + ".SAFE", save_dir=orbit_folder, source=orbit_data_source
     )
@@ -311,9 +332,18 @@ def get_data_for_scene_and_make_run_config(
     logger.info(f"File downloaded to : {ORBIT_PATHS[0]}")
 
     # # download the dem
-    dem_folder = download_folder / "dem" / dem_type
     DEM_PATH = dem_folder / f"{scene}_dem.tif"
     bounds = scene_polygon.bounds
+
+    logger.info(f"The scene shape is : {scene_polygon}")
+    logger.info(f"The scene bounds are : {bounds}")
+
+    if check_s1_bounds_cross_antimeridian(bounds):
+        # the scene crosses the antimeridian, the bounds need to be
+        # correctly obtained from the source shape
+        logger.warning("The scene crosses the antimeridian, correcting bounds")
+        bounds = get_correct_bounds_from_shape_at_antimeridian(scene_polygon)
+        logger.info(f"The scene bounds are : {bounds}")
 
     logger.info(f"Downloading DEM type `{dem_type}` to path : {DEM_PATH}")
     if dem_type == "cop_glo30":
@@ -434,7 +464,8 @@ def get_data_for_scene_and_make_run_config(
     "--collection",
     required=True,
     type=str,
-    help="The collection the products belong to. e.g. s1_rtc_c1",
+    help="collection associated with product. e.g. s1_rtc_c1. Must end in 'cX' where X is an "
+    "integer number referring to the collection.",
 )
 @click.option(
     "--s3-bucket", required=True, type=str, help="The bucket to upload the files"
