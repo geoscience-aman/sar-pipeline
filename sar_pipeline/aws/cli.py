@@ -87,7 +87,8 @@ logger = logging.getLogger(__name__)
     "--collection",
     required=True,
     type=str,
-    help="collection associated with product. e.g. s1_rtc_c1",
+    help="collection associated with product. e.g. s1_rtc_c1. Must end in 'cX' where X is an "
+    "integer number referring to the collection.",
 )
 @click.option(
     "--download-folder",
@@ -463,7 +464,8 @@ def get_data_for_scene_and_make_run_config(
     "--collection",
     required=True,
     type=str,
-    help="The collection the products belong to. e.g. s1_rtc_c1",
+    help="collection associated with product. e.g. s1_rtc_c1. Must end in 'cX' where X is an "
+    "integer number referring to the collection.",
 )
 @click.option(
     "--s3-bucket", required=True, type=str, help="The bucket to upload the files"
