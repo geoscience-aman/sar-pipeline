@@ -456,7 +456,7 @@ class BurstH5toStacManager:
         # link to the .h5 file containing additional metadata
         self.item.add_link(
             pystac.Link(
-                rel="metadata",
+                rel="additional-metadata",
                 target=f"{self.base_href}/{self.h5_filepath.name}",
             )
         )
