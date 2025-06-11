@@ -288,6 +288,9 @@ def get_data_for_scene_and_make_run_config(
         collection=collection,
         make_existing_products=make_existing_products,
     )
+
+    logger.info(f"Processing {len(burst_id_list)} bursts for scene : {burst_id_list}")
+
     # to link the RTC_S1_STATIC layers to RTC_S1, the static layers must already exist
     if link_static_layers and product == "RTC_S1":
         logger.info(f"Checking static layers exist for bursts in scene : {scene}")
@@ -306,8 +309,6 @@ def get_data_for_scene_and_make_run_config(
         scene_polygon = shape(asf_scene_metadata.geometry)
         polarisation_list = asf_scene_metadata.properties["polarization"].split("+")
         input_scene_url = asf_scene_metadata.properties["url"]
-
-    logger.info(f"Processing {len(burst_id_list)} bursts for scene : {burst_id_list}")
 
     # # download the orbits
     logger.info(f"Downloading Orbits for scene : {scene}")

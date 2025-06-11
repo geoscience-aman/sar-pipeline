@@ -401,6 +401,8 @@ def check_static_layers_in_s3(
             f"{n_missing} of {n_bursts} required bursts have files missing.\n"
             f"Missing Bursts and static layer filetypes:\n"
             f"{missing_info}\n"
-            f"Example path searched : {static_layers_s3_folder}\n"
-            f"Check S3 linked location settings or create missing static layers using --product RTC_S1_STATIC. See workflow docs for details."
+            f"Example AWS S3 path searched : {static_layers_s3_bucket}/{static_layers_s3_folder}\n"
+            f"Check linked location arguments or create the missing static layers. "
+            f"E.g. re-run the workflow using `--product RTC_S1_STATIC --collection rtc_s1_static_c1.`\n"
+            f"See workflow docs for details at docs/workflows/aws.md."
         )
