@@ -507,7 +507,8 @@ def make_rtc_opera_stac_and_upload_bursts(
         burst_h5_files = list(burst_folder.glob("*.h5"))
         if len(burst_h5_files) != 1:
             raise ValueError(
-                f"{len(burst_h5_files)} .h5 files found. Expecting 1 in : {burst_folder}"
+                f"{len(burst_h5_files)} .h5 files found. Expecting 1 in : {burst_folder}."
+                f"This error might be caused by repeat runs. Delete duplicate files or change run setings."
             )
         burst_h5_filepath = burst_folder / burst_h5_files[0]
         # make the stac metadata from the .h5 metadata
@@ -532,7 +533,7 @@ def make_rtc_opera_stac_and_upload_bursts(
         # add links that can change
         burst_stac_manager.add_dynamic_links_from_h5()
         # add the link to self/metadata
-        if link_static_layers:
+        if link_static_layers and product == "RTC_S1":
             # link to static layer metadata is in the .h5 file
             # use this to map assets to the file
             burst_stac_manager.add_linked_static_layer_assets_and_link()
