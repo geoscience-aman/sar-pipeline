@@ -16,6 +16,7 @@ from sar_pipeline.aws.preparation.burst_utils import (
     check_static_layers_in_s3,
     make_static_layer_base_url,
     check_burst_products_exists_in_s3,
+    get_burst_ids_and_start_times_for_scene_from_asf,
 )
 
 from sar_pipeline.aws.preparation.config import RTCConfigManager
@@ -206,14 +207,14 @@ def get_data_for_scene_and_make_run_config(
         raise ValueError("product must be S1_RTC or S1_RTC_STATIC")
 
     # ensure the collection ends with cX, where X is a positive integer
-    colletion_number = re.search(r"c(\d+)$", collection)
-    if not colletion_number:
+    collection_number = re.search(r"c(\d+)$", collection)
+    if not collection_number:
         raise ValueError(
             f"Invalid collection name. The collection MUST end in cX where X"
             " is an integer associated with the collection. E.g. rtc_s1_c1."
         )
 
-    # subfolders for downloads
+    # sub-folders for downloads
     orbit_folder = download_folder / "orbits"
     scene_folder = download_folder / "scenes"
     dem_folder = download_folder / "dem" / dem_type
@@ -228,88 +229,66 @@ def get_data_for_scene_and_make_run_config(
         scratch_folder.mkdir(parents=True, exist_ok=True)
         run_config_save_path.parent.mkdir(parents=True, exist_ok=True)
 
-    # download the SLC and get scene metadata from asf
-    logger.info(f"Downloading SLC for scene : {scene}")
-
     if scene_data_source == "ASF":
-        SCENE_PATH, asf_scene_metadata = download_slc_from_asf(scene, scene_folder)
-        scene_polygon = shape(asf_scene_metadata.geometry)
-        polarisation_list = asf_scene_metadata.properties["polarization"].split("+")
-        input_scene_url = asf_scene_metadata.properties["url"]
-    if scene_data_source == "CDSE":
+        # the burst ids and start-times can be acquired from the asf-search api.
+        # We can therefore check if products already exist before needing to download the scene
+        logger.info(f"Querying ASF for scene burst id's")
+        all_slc_burst_id_list, all_slc_burst_st_list = (
+            get_burst_ids_and_start_times_for_scene_from_asf(scene)
+        )
+        logger.info(
+            f"{len(all_slc_burst_id_list)} burst ids found for scene from ASF API"
+        )
+
+    elif scene_data_source == "CDSE":
+        # burst information must be taken from a downloaded scene
+        logger.info(f"Downloading SLC for scene : {scene}")
         SCENE_PATH, cdse_scene_metadata = download_slc_from_cdse(scene, scene_folder)
         scene_polygon = shape(cdse_scene_metadata["geometry"])
         polarisation_list = cdse_scene_metadata["properties"]["polarisation"].split("&")
         input_scene_url = cdse_scene_metadata["properties"]["services"]["download"][
             "url"
         ]
+        # get burst data from the downloaded slc
+        slc_bursts_info = []
+        logger.info(f"Getting burst information from the downloaded scene slc file")
+        logger.info(f"Scene polarisations : {polarisation_list}")
+        for pol in polarisation_list:
+            slc_bursts_info += s1_info.get_bursts(SCENE_PATH, pol=pol.lower())
+            all_slc_burst_id_list = [str(b.burst_id) for b in slc_bursts_info]
+            all_slc_burst_st_list = [b.sensing_start for b in slc_bursts_info]
 
-    # get burst data from the slc
-    slc_bursts_info = []
-    logger.info(f"Getting burst information from the scene slc file")
-    logger.info(f"Scene polarisations : {polarisation_list}")
-    for pol in polarisation_list:
-        slc_bursts_info += s1_info.get_bursts(SCENE_PATH, pol=pol.lower())
-        all_slc_burst_id_list = [str(b.burst_id) for b in slc_bursts_info]
-        all_slc_burst_id_list = list(set(all_slc_burst_id_list))
+        logger.info(
+            f"{len(all_slc_burst_id_list)} burst ids found for scene in the slc"
+        )
 
-    logger.info(f"{len(all_slc_burst_id_list)} burst ids found for scene in the slc")
-    # split the burst_id list
+    # Limit the bursts to be processed if a list has been provided
     if burst_id_list:
         logger.info(f"List of bursts to process provided")
         burst_id_list = burst_id_list.split(" ")
-        slc_bursts_info = [
-            b for b in slc_bursts_info if str(b.burst_id) in burst_id_list
+        burst_st_list = [
+            all_slc_burst_st_list[i]
+            for i, b in enumerate(all_slc_burst_id_list)
+            if b in burst_id_list
         ]
-        burst_id_list = list(set(burst_id_list))
     else:
         logger.info(f"List of bursts not provided, processing all")
         burst_id_list = all_slc_burst_id_list
+        burst_st_list = all_slc_burst_st_list
 
-    # check if the files already exist in S3
     logger.info(
         f"Checking if burst products already exists in S3 for product {product}"
     )
-    existing_burst_ids, existing_s3_paths = check_burst_products_exists_in_s3(
+    burst_id_list = check_burst_products_exists_in_s3(
         product=product,
-        slc_bursts_info=slc_bursts_info,
+        burst_id_list=burst_id_list,
+        burst_st_list=burst_st_list,
         s3_bucket=s3_bucket,
         s3_project_folder=s3_project_folder,
         collection=collection,
+        make_existing_products=make_existing_products,
     )
-    if len(existing_burst_ids) > 0:
-        logging.warning(
-            f"Products already exist for {len(existing_burst_ids)} of {len(burst_id_list)} requested bursts:"
-        )
-        # iterate through existing products and show message with path
-        for i in range(0, len(existing_burst_ids)):
-            logger.warning(
-                f"Existing product : {existing_burst_ids[i]}, s3_path : {s3_bucket}/{existing_s3_paths[i]}"
-            )
-        if not make_existing_products:
-            # limit burst ids to those which haven't been processed
-            burst_id_list = [b for b in burst_id_list if b not in existing_burst_ids]
-            logger.warning(
-                "Skipping the existing products. To create these, remove the existing products from S3. OR, pass flag "
-                "'--make-existing-products' to workflow. WARNING this can create duplicates that may impact downstream processes."
-            )
-            # exit if all existing burst products exist
-            if all(b in existing_burst_ids for b in burst_id_list):
-                logging.warning(
-                    "All desired burst products already exist, exiting process early"
-                )
-                sys.exit(100)
-        else:
-            logger.warning(
-                "Existing products are being re-created. WARNING This will create duplicates in the S3 bucket that may impact downstream processes. "
-                "set '--make-existing-products' if this behavior is not desired."
-            )
-
-    logger.info(f"Processing {len(burst_id_list)} bursts for scene : {burst_id_list}")
-    slc_bursts_info = [b for b in slc_bursts_info if str(b.burst_id) in burst_id_list]
-
-    # check the static layers exist
-    # to link the RTC_S1_STATIC layers to RTC_S1, they must already exist
+    # to link the RTC_S1_STATIC layers to RTC_S1, the static layers must already exist
     if link_static_layers and product == "RTC_S1":
         logger.info(f"Checking static layers exist for bursts in scene : {scene}")
         check_static_layers_in_s3(
@@ -320,15 +299,21 @@ def get_data_for_scene_and_make_run_config(
             static_layers_s3_project_folder=linked_static_layers_s3_project_folder,
         )
 
+    if scene_data_source == "ASF":
+        # download the SLC and get scene metadata from asf
+        logger.info(f"Downloading SLC for scene : {scene}")
+        SCENE_PATH, asf_scene_metadata = download_slc_from_asf(scene, scene_folder)
+        scene_polygon = shape(asf_scene_metadata.geometry)
+        polarisation_list = asf_scene_metadata.properties["polarization"].split("+")
+        input_scene_url = asf_scene_metadata.properties["url"]
+
+    logger.info(f"Processing {len(burst_id_list)} bursts for scene : {burst_id_list}")
+
     # # download the orbits
     logger.info(f"Downloading Orbits for scene : {scene}")
     ORBIT_PATHS = download_orbits(
         sentinel_file=scene + ".SAFE", save_dir=orbit_folder, source=orbit_data_source
     )
-    if len(ORBIT_PATHS) > 1:
-        raise ValueError(
-            f"{len(ORBIT_PATHS)} orbit paths found for scene. Expecting 1."
-        )
     logger.info(f"File downloaded to : {ORBIT_PATHS[0]}")
 
     # # download the dem
