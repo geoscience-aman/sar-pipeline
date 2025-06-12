@@ -1,5 +1,5 @@
 import click
-from pathlib import Path
+from pathlib import Path, PurePath
 import tomli
 import logging
 from typing import Literal
@@ -17,6 +17,7 @@ from sar_pipeline.nci.preparation.scenes import (
     parse_scene_file_dates,
     find_scene_file_from_id,
 )
+from sar_pipeline.utils.sentinel1 import is_s1_filename, is_s1_id
 from sar_pipeline.nci.processing.pyroSAR.pyrosar_geocode import (
     run_pyrosar_gamma_geocode,
 )
@@ -171,13 +172,36 @@ def submit_pyrosar_gamma_workflow(
         click.echo(f"Creating output directory: {output_dir}")
         output_dir.mkdir(parents=True)
 
-    scene_file = Path(scene)
+    # Function to get filepaths on NCI
+    def _get_nci_s1_filepath(input: str) -> list[Path]:
+        input_as_path = Path(input)
+        if is_s1_id(input):
+            click.echo(f"A Sentinel-1 id was passed: {input}")
+            filepath = find_scene_file_from_id(input)
+            return [filepath]
+        elif is_s1_filename(input):
+            click.echo(f"A Sentinel-1 filename was passed: {input}")
+            scene_id = PurePath(input).stem
+            filepath = find_scene_file_from_id(scene_id)
+            return [filepath]
+        elif input_as_path.is_file():
+            if input_as_path.suffix == "SAFE":
+                click.echo(f"A Sentinel-1 file path was passed: {input_as_path}")
+                return [input_as_path]
+            else:
+                filepaths = []
+                click.echo("A file was passed, attempting to open and process contents")
+                with open(input_as_path) as f:
+                    for line in f:
+                        line_path = _get_nci_s1_filepath(line.rstrip())
+                        filepaths.extend(line_path)
+                return filepaths
+        else:
+            raise ValueError(
+                "scene must be a valid Sentinel-1 id/filename/path, or a file containing valid Sentinel-1 ids/filenames/paths"
+            )
 
-    if not scene_file.is_file():
-        click.echo("An ID was passed -- locating scene on NCI")
-        scene_file = find_scene_file_from_id(scene)
-
-    click.echo(f"Submitting job for scene ID: {scene_file.stem}")
+    processing_list = _get_nci_s1_filepath(scene)
 
     pbs_parameters = {
         "ncpu": ncpu,
@@ -190,21 +214,22 @@ def submit_pyrosar_gamma_workflow(
     log_dir = output_dir / "submission/logs"
     log_dir.mkdir(parents=True, exist_ok=True)
 
-    submit_job(
-        scene=scene_file,
-        spacing=spacing,
-        scaling=scaling,
-        target_crs=target_crs,
-        orbit_dir=orbit_dir,
-        orbit_type=orbit_type,
-        etad_dir=etad_dir,
-        output_dir=output_dir,
-        log_dir=log_dir,
-        gamma_lib_dir=gamma_lib_dir,
-        gamma_env_var=gamma_env_var,
-        pbs_parameters=pbs_parameters,
-        dry_run=dry_run,
-    )
+    for scene_file in processing_list:
+        submit_job(
+            scene=scene_file,
+            spacing=spacing,
+            scaling=scaling,
+            target_crs=target_crs,
+            orbit_dir=orbit_dir,
+            orbit_type=orbit_type,
+            etad_dir=etad_dir,
+            output_dir=output_dir,
+            log_dir=log_dir,
+            gamma_lib_dir=gamma_lib_dir,
+            gamma_env_var=gamma_env_var,
+            pbs_parameters=pbs_parameters,
+            dry_run=dry_run,
+        )
 
 
 # run_pyrosar_gamma_workflow
