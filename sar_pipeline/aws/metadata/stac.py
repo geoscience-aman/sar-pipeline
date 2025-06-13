@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Literal
 import rasterio
 import pystac
-from shapely.geometry import shape
+from shapely.geometry import shape, box, mapping
 from dateutil.parser import isoparse
 import requests
 import datetime
@@ -106,7 +106,7 @@ class BurstH5toStacManager:
             self.geometry_4326 = polygon_str_to_geojson(
                 self.h5.search_value("boundingPolygon")
             )
-            self.bbox_4326 = shape(self.geometry_4326["geometry"]).bounds
+            self.bbox_4326 = shape(self.geometry_4326).bounds
         elif self.product == "RTC_S1_STATIC":
             # 4326 needs to be converted from native coordinates
             self.bbox_4326 = convert_bbox(
@@ -115,7 +115,7 @@ class BurstH5toStacManager:
                 trg_crs=4326,
             )
             # geometry is not included, set this to be bbox
-            self.geometry_4326 = self.bbox_4326
+            self.geometry_4326 = mapping(box(*self.bbox_4326))
 
         self.burst_s3_subfolder = self._make_s3_subfolder()
         self.bucket_href = f"https://{self.s3_bucket}.s3.{self.s3_region}.amazonaws.com"
@@ -255,10 +255,8 @@ class BurstH5toStacManager:
 
         # add ceos-ard stac extension properties
         if self.product == "RTC_S1":
-            self.item.properties["ceosard:type"] = "NRB"
-            self.item.properties["ceosard:specification"] = (
-                "Synthetic Aperture Radar (CEOS-ARD SAR)"
-            )
+            self.item.properties["ceosard:type"] = "radar"
+            self.item.properties["ceosard:specification"] = "NRB"
             self.item.properties["ceosard:specification_version"] = "1.1"
 
         # add projection (proj) stac extension properties
@@ -322,67 +320,70 @@ class BurstH5toStacManager:
             "dem-handler": dem_handler.__version__,
         }
 
-        # proposed nrb stac extension properties
-        self.item.properties["nrb:source_id"] = self.h5.search_value("l1SlcGranules")
-        self.item.properties["nrb:scene_id"] = self.h5.search_value("l1SlcGranules")[
+        # proposed sarard stac extension properties
+        self.item.properties["sarard:source_id"] = self.h5.search_value("l1SlcGranules")
+        self.item.properties["sarard:scene_id"] = self.h5.search_value("l1SlcGranules")[
             0
         ].replace(".SAFE", "")
-        self.item.properties["nrb:pixel_spacing_x"] = abs(
+        self.item.properties["sarard:pixel_spacing_x"] = abs(
             self.h5.search_value("xCoordinateSpacing")
         )
-        self.item.properties["nrb:pixel_spacing_y"] = abs(
+        self.item.properties["sarard:pixel_spacing_y"] = abs(
             self.h5.search_value("yCoordinateSpacing")
         )
-        self.item.properties["nrb:resolution_x"] = abs(
+        self.item.properties["sarard:resolution_x"] = abs(
             self.h5.search_value("xCoordinateSpacing")
         )
-        self.item.properties["nrb:resolution_y"] = abs(
+        self.item.properties["sarard:resolution_y"] = abs(
             self.h5.search_value("yCoordinateSpacing")
         )
-        self.item.properties["nrb:speckle_filter_applied"] = self.h5.search_value(
+        self.item.properties["sarard:speckle_filter_applied"] = self.h5.search_value(
             "filteringApplied"
         )
-        self.item.properties["nrb:speckle_filter_type"] = ""
-        self.item.properties["nrb:speckle_filter_window"] = ()
-        self.item.properties["nrb:measurement_type"] = self.h5.search_value(
+        self.item.properties["sarard:speckle_filter_type"] = ""
+        self.item.properties["sarard:speckle_filter_window"] = ()
+        self.item.properties["sarard:measurement_type"] = self.h5.search_value(
             "outputBackscatterNormalizationConvention"
         )
-        self.item.properties["nrb:measurement_convention"] = self.h5.search_value(
+        self.item.properties["sarard:measurement_convention"] = self.h5.search_value(
             "outputBackscatterExpressionConvention"
         )
-        self.item.properties["nrb:conversion_eq"] = self.h5.search_value(
+        self.item.properties["sarard:conversion_eq"] = self.h5.search_value(
             "outputBackscatterDecibelConversionEquation"
         )
         if self.product == "RTC_S1":
-            self.item.properties["nrb:noise_removal_applied"] = self.h5.search_value(
+            self.item.properties["sarard:noise_removal_applied"] = self.h5.search_value(
                 "noiseCorrectionApplied"
             )
 
         # additional non required parameters for atmosphere that would be good to have
-        self.item.properties["nrb:static_tropospheric_correction_applied"] = (
+        self.item.properties["sarard:static_tropospheric_correction_applied"] = (
             self.h5.search_value("staticTroposphericGeolocationCorrectionApplied")
         )
-        self.item.properties["nrb:wet_tropospheric_correction_applied"] = (
+        self.item.properties["sarard:wet_tropospheric_correction_applied"] = (
             self.h5.search_value("wetTroposphericGeolocationCorrectionApplied")
         )
-        self.item.properties["nrb:bistatic_correction_applied"] = self.h5.search_value(
-            "bistaticDelayCorrectionApplied"
+        self.item.properties["sarard:bistatic_correction_applied"] = (
+            self.h5.search_value("bistaticDelayCorrectionApplied")
         )
-        self.item.properties["nrb:ionospheric_correction_applied"] = False
+        self.item.properties["sarard:ionospheric_correction_applied"] = False
 
         # TODO fill with study result values
-        self.item.properties["nrb:geometric_accuracy_ALE"] = "TODO"
-        self.item.properties["nrb:geometric_accuracy_rmse"] = "TODO"
-        self.item.properties["nrb:geometric_accuracy_range"] = "TODO"
-        self.item.properties["nrb:geometric_accuracy_azimuth"] = "TODO"
+        self.item.properties["sarard:geometric_accuracy_ALE"] = "TODO"
+        self.item.properties["sarard:geometric_accuracy_rmse"] = "TODO"
+        self.item.properties["sarard:geometric_accuracy_range"] = "TODO"
+        self.item.properties["sarard:geometric_accuracy_azimuth"] = "TODO"
 
         # add the storage stac extension properties
-        self.item.properties["storage:type"] = "aws-s3"
-        self.item.properties["storage:platform"] = (
-            f"https://{self.s3_bucket}.s3.{self.s3_region}"
-        )
-        self.item.properties["storage:region"] = f"{self.s3_region}"
-        self.item.properties["storage:requester_pays"] = False
+        self.item.properties["storage:schemes"] = {
+            "aws-std": {
+                "type": "aws-s3",
+                "platform": "https://{bucket}.s3.{region}.amazonaws.com",
+                "bucket": f"{self.s3_bucket}",
+                "region": f"{self.s3_region}",
+                "requester_pays": True,
+            }
+        }
 
     def add_fixed_links(self):
         """add fixed links that are not expected to change frequently"""
@@ -506,6 +507,7 @@ class BurstH5toStacManager:
         elif self.product == "RTC_S1_STATIC":
             pols = []  # no pol for static products, only auxiliary files
         IGNORE_ASSETS = [f"_{p}.tif" for p in ["HH", "HV", "VV", "VH"] if p not in pols]
+        INCLUDED_POL_ASSETS = [f"_{p}.tif" for p in pols]
         INCLUDED_ASSET_FILETYPES = [
             x for x in REQUIRED_ASSET_FILETYPES[self.product] if x not in IGNORE_ASSETS
         ]
@@ -555,6 +557,12 @@ class BurstH5toStacManager:
                             "shadow_and_layover": 3,
                             "invalid_sample": 255,
                         }
+                    if asset_filetype in INCLUDED_POL_ASSETS:
+                        # need to add a processing property to satisfy the
+                        # processing stac requirements
+                        extra_fields["processing:level"] = self.item.properties[
+                            "processing:level"
+                        ]
             else:
                 extra_fields = {}
 

@@ -264,7 +264,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/b3/38/89ba8ad64ae25be8de66a6d463314cf1eb366222074cfda9ee839c56a4b4/mdurl-0.1.2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/8a/0b/9fcc47d19c48b59121088dd6da2488a49d5f72dacf8262e2790a1d2c7d15/pygments-2.19.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/79/84/0fdf9b18ba31d69877bd39c9cd6052b47f3761e9910c15de788e519f079f/PyJWT-2.9.0-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/08/94/6f93e55886cae4076dfe1c5c0a768963f6faca34d7cd27a2ee6800e29387/pystac-1.12.2-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/0f/7c/1b361a24d3087cd922ec1f6dfe02f230507d800ada3f922532f1f906a09e/pystac-1.13.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/fb/13/e3b075031a738c9598c51cfbc4c7879e26729c53aa9cca59211c44235314/regex-2024.11.6-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/19/71/39c7c0d87f8d4e6c020a393182060eaefeeae6c01dab6a84ec346f2567df/rich-13.9.4-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/f2/ea/5db30ed6ae5c5d681b38bc459aba542d9633cb2cfea27c48753e83f236ff/s1_orbits-0.1.3-py3-none-any.whl
@@ -803,7 +803,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/cc/20/ff623b09d963f88bfde16306a54e12ee5ea43e9b597108672ff3a408aad6/pathspec-0.12.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/8a/0b/9fcc47d19c48b59121088dd6da2488a49d5f72dacf8262e2790a1d2c7d15/pygments-2.19.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/79/84/0fdf9b18ba31d69877bd39c9cd6052b47f3761e9910c15de788e519f079f/PyJWT-2.9.0-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/08/94/6f93e55886cae4076dfe1c5c0a768963f6faca34d7cd27a2ee6800e29387/pystac-1.12.2-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/0f/7c/1b361a24d3087cd922ec1f6dfe02f230507d800ada3f922532f1f906a09e/pystac-1.13.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/fb/13/e3b075031a738c9598c51cfbc4c7879e26729c53aa9cca59211c44235314/regex-2024.11.6-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/19/71/39c7c0d87f8d4e6c020a393182060eaefeeae6c01dab6a84ec346f2567df/rich-13.9.4-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/f2/ea/5db30ed6ae5c5d681b38bc459aba542d9633cb2cfea27c48753e83f236ff/s1_orbits-0.1.3-py3-none-any.whl
@@ -5457,17 +5457,6 @@ packages:
   - pkg:pypi/pysolid?source=hash-mapping
   size: 84408
   timestamp: 1725952086683
-- pypi: https://files.pythonhosted.org/packages/08/94/6f93e55886cae4076dfe1c5c0a768963f6faca34d7cd27a2ee6800e29387/pystac-1.12.2-py3-none-any.whl
-  name: pystac
-  version: 1.12.2
-  sha256: 7ab6d3d191013727d789f803869789a26e546543a27da3bf2b8abf96b8264d3f
-  requires_dist:
-  - python-dateutil>=2.7.0
-  - jinja2<4.0 ; extra == 'jinja2'
-  - orjson>=3.5 ; extra == 'orjson'
-  - urllib3>=1.26 ; extra == 'urllib3'
-  - jsonschema~=4.18 ; extra == 'validation'
-  requires_python: '>=3.10'
 - pypi: https://files.pythonhosted.org/packages/0f/7c/1b361a24d3087cd922ec1f6dfe02f230507d800ada3f922532f1f906a09e/pystac-1.13.0-py3-none-any.whl
   name: pystac
   version: 1.13.0
@@ -5926,18 +5915,18 @@ packages:
   timestamp: 1740681675666
 - pypi: .
   name: sar-pipeline
-  version: 0.2.2b1.dev1+g8cd4c13.d20250530
-  sha256: 2deb3ea4b9fb45f1f276adaf8c3510b11f7d14c1703ae2565123d241217caf46
+  version: 0.2.2b1.dev25+g35ebd0e.d20250613
+  sha256: 6e1b53c063de4eb04f910fc85d93be05cdf8490aecc40742f8a47c7e81c5f3c8
   requires_dist:
   - asf-search>=8.1.1
   - boto3>=1.37.1
   - botocore>=1.37.1
   - h5py>=3.13.0
-  - pystac>=1.12.2
   - ruamel-yaml>=0.18.10
   - s1-orbits>=0.1.3
   - cdsetool>=0.2.13
   - dem-handler @ git+https://github.com/GeoscienceAustralia/dem-handler.git@v0.2.2
+  - pystac>=1.13.0,<2
   requires_python: '>=3.8'
   editable: true
 - conda: https://conda.anaconda.org/conda-forge/linux-64/scikit-learn-1.6.1-py312h7a48858_0.conda

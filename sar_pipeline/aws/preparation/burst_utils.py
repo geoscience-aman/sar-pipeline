@@ -258,7 +258,8 @@ def check_burst_products_exists_in_s3(
                 "Existing products are being re-created. WARNING This will create duplicates in the S3 bucket that may impact downstream processes. "
                 "set '--make-existing-products' if this behavior is not desired."
             )
-
+    else:
+        f"No products already exist for the requested bursts."
     return burst_id_list
 
 
