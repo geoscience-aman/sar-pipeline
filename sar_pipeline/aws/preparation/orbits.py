@@ -122,4 +122,4 @@ def download_orbits(
         raise ValueError(
             f"{len(ORBIT_PATHS)} orbit paths found for scene. Expecting 1."
         )
-    return ORBIT_PATHS
+    return orbit_paths
