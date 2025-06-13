@@ -71,7 +71,7 @@ def find_s3_filepaths_from_suffixes(bucket_name, s3_folder, suffixes) -> dict:
 
 
 def get_burst_ids_and_start_times_for_scene_from_asf(
-    scene: str, burst_prefix: str = "t", lowercase=True
+    scene: str, burst_prefix: str = "t", lowercase: bool = True
 ) -> tuple[list[str], list[datetime]]:
     """Get the list of burst_ids corresponding to a scene
 
