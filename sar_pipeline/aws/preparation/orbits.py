@@ -118,7 +118,7 @@ def download_orbits(
         asf_password=asf_password,
     )
 
-    if len(ORBIT_PATHS) > 1:
+    if len(orbit_paths) > 1:
         raise ValueError(
             f"{len(ORBIT_PATHS)} orbit paths found for scene. Expecting 1."
         )
