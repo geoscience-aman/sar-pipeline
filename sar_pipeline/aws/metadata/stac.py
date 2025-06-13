@@ -480,6 +480,24 @@ class BurstH5toStacManager:
             )
         )
 
+    def add_collection_link(self, target="./collection.json"):
+        """add link to the collection
+
+        Parameters
+        ----------
+        target : str, optional
+            Path to collection file. by default './collection.json'.
+        """
+
+        # TODO placeholder
+        self.item.add_link(
+            pystac.Link(
+                rel="collection",
+                target=target,
+                media_type=pystac.media_type.MediaType.JSON,
+            )
+        )
+
     def add_assets_from_folder(self, burst_folder: Path):
         """Add the asset files from the burst folder
 
