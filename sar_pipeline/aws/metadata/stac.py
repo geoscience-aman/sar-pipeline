@@ -76,7 +76,6 @@ class BurstH5toStacManager:
         self.stac_extensions = [
             "https://stac-extensions.github.io/product/v0.1.0/schema.json",
             "https://stac-extensions.github.io/sar/v1.1.0/schema.json",
-            "https://stac-extensions.github.io/altimetry/v0.1.0/schema.json",
             "https://stac-extensions.github.io/projection/v2.0.0/schema.json",
             "https://stac-extensions.github.io/sat/v1.1.0/schema.json",
             "https://stac-extensions.github.io/sentinel-1/v0.2.0/schema.json",
@@ -270,15 +269,14 @@ class BurstH5toStacManager:
                 "centerFrequency"
             )
             self.item.properties["sar:polarizations"] = self.polarisations
+        else:
+            # add all to static layer
+            self.item.properties["sar:polarizations"] = ["HH", "VV", "HV", "VH"]
         self.item.properties["sar:observation_direction"] = self.h5.search_value(
             "lookDirection"
         )
-        self.item.properties["sar:relative_burst"] = self.burst_id
-        self.item.properties["sar:beam_ids"] = self.h5.search_value("subSwathID")
-
-        # add altimetry stac extension properties
-        self.item.properties["altm:instrument_type"] = "sar"
-        self.item.properties["altm:instrument_mode"] = self.h5.search_value(
+        self.item.properties["sar:beam_ids"] = [self.h5.search_value("subSwathID")]
+        self.item.properties["sar:instrument_mode"] = self.h5.search_value(
             "acquisitionMode"
         )
 
@@ -290,13 +288,10 @@ class BurstH5toStacManager:
             "absoluteOrbitNumber"
         )
         self.item.properties["sat:relative_orbit"] = self.h5.search_value("trackNumber")
-        self.item.properties["sat:orbit_cycle"] = "12"
-        self.item.properties["sat:osv"] = self.h5.search_value(
-            "orbitFiles"
-        )  # Link to a file containing the orbit state vectors.
-        self.item.properties["sat:orbit_state_vectors"] = (
-            "TODO"  # TODO map this from .h5
-        )
+        self.item.properties["sat:orbit_cycle"] = 12
+        # self.item.properties["sat:orbit_state_vectors"] = (
+        #     "TODO"  # TODO map this from .h5
+        # )
 
         # add sentinel-1 stac extension properties - https://github.com/stac-extensions/sentinel-1
         self.item.properties["s1:orbit_source"] = self.h5.search_value("orbitType")
@@ -309,8 +304,8 @@ class BurstH5toStacManager:
         self.item.properties["processing:datetime"] = self.h5.search_value(
             "identification/processingDateTime"
         )
-        self.item.properties["processing:version"] = self.h5.search_value(
-            "identification/productVersion"
+        self.item.properties["processing:version"] = str(
+            self.h5.search_value("identification/productVersion")
         )
         self.item.properties["processing:software"] = {
             "isce3": self.h5.search_value("algorithms/isce3Version"),
@@ -325,6 +320,10 @@ class BurstH5toStacManager:
         self.item.properties["sarard:scene_id"] = self.h5.search_value("l1SlcGranules")[
             0
         ].replace(".SAFE", "")
+        self.item.properties["sarard:burst_id"] = self.burst_id
+        self.item.properties["sarard:orbit_files"] = self.h5.search_value(
+            "orbitFiles"
+        )  # Link to a file containing the orbit state vectors.
         self.item.properties["sarard:pixel_spacing_x"] = abs(
             self.h5.search_value("xCoordinateSpacing")
         )
