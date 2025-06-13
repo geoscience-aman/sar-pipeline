@@ -544,7 +544,13 @@ def make_rtc_opera_stac_and_upload_bursts(
         # save the metadata
         burst_stac_manager.save(burst_folder / stac_filename)
         # TODO validate the stac item when finalised
-        # burst_stac_manager.item.validate()
+        logger.info("Validating STAC document")
+        try:
+            burst_stac_manager.item.validate()
+            logger.info("STAC is valid.")
+        except Exception as e:
+            logger.error(f"STAC validation failed: {e}")
+            raise
         # push folder to S3
         if skip_upload_to_s3:
             logger.info(f"Skipping upload to S3.")
