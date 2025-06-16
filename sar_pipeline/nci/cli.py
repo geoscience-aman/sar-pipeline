@@ -215,21 +215,30 @@ def submit_pyrosar_gamma_workflow(
     log_dir.mkdir(parents=True, exist_ok=True)
 
     for scene_file in processing_list:
-        submit_job(
-            scene=scene_file,
-            spacing=spacing,
-            scaling=scaling,
-            target_crs=target_crs,
-            orbit_dir=orbit_dir,
-            orbit_type=orbit_type,
-            etad_dir=etad_dir,
-            output_dir=output_dir,
-            log_dir=log_dir,
-            gamma_lib_dir=gamma_lib_dir,
-            gamma_env_var=gamma_env_var,
-            pbs_parameters=pbs_parameters,
-            dry_run=dry_run,
-        )
+
+        # Check if already processed
+        scene_id = scene_file.stem
+        processed_path = output_dir / f"data/processed_scene/{scene_id}"
+        if len(list(processed_path.glob("*gamma0*.tif"))) > 0:
+            click.echo(
+                f"{scene_id} has already been processed. Check output at {processed_path}"
+            )
+        else:
+            submit_job(
+                scene=scene_file,
+                spacing=spacing,
+                scaling=scaling,
+                target_crs=target_crs,
+                orbit_dir=orbit_dir,
+                orbit_type=orbit_type,
+                etad_dir=etad_dir,
+                output_dir=output_dir,
+                log_dir=log_dir,
+                gamma_lib_dir=gamma_lib_dir,
+                gamma_env_var=gamma_env_var,
+                pbs_parameters=pbs_parameters,
+                dry_run=dry_run,
+            )
 
 
 # run_pyrosar_gamma_workflow
