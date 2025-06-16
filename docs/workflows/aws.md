@@ -83,7 +83,7 @@ The AWS pipeline runs using a docker container. At runtime, the script [run_aws_
 - `product` -> The product being created with the workflow. Must be `RTC_S1` or `RTC_S1_STATIC`.
 - `s3_bucket` -> the bucket to upload the products
 - `s3_project_folder` -> The project folder to upload to.
-- `collection` -> The collection which the set of products belongs.
+- `collection` -> The collection which the set of products belongs. Must end with 'cX' where X is a valid integer reffering to the collection number of the product. e.g. rtc_s1_c1.
 - `make_existing_products` -> Whether to generate products even if they already exist in AWS S3 under the specified product folder path `s3_bucket/s3_project_folder/collection/...`. 
   - **WARNING** - Passing this flag will create duplicate files and overwrite existing metadata, which may affect downstream workflows.
 - `skip_upload_to_s3` -> Make the products, but skip uploading them to S3.
@@ -344,5 +344,5 @@ docker run --env-file env.secret -v $(pwd)/scripts:/home/rtc_user/scripts -v /da
 ```
 
 ```bash
-docker run --env-file env.secret -v $(pwd)/scripts:/home/rtc_user/scripts -v /data/working:/home/rtc_user/working -it sar-pipeline:rema --scene S1A_IW_SLC__1SSH_20220101T124744_20220101T124814_041267_04E7A2_1DAD --output_crs 3031 --burst_id_list t070_149815_iw3 t070_149821_iw1 --s3_project_folder experimental/REMA_32 --dem_type REMA_32 --skip_upload_to_s3 --make_existing_products
+docker run --env-file env.secret -v $(pwd)/scripts:/home/rtc_user/scripts -v /data/working:/home/rtc_user/working -it sar-pipeline --scene S1A_IW_SLC__1SSH_20220101T124744_20220101T124814_041267_04E7A2_1DAD --output_crs 3031 --burst_id_list t070_149815_iw3 t070_149821_iw1 --s3_project_folder experimental/REMA_32 --dem_type REMA_32 --skip_upload_to_s3 --make_existing_products
 ```
