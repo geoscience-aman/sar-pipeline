@@ -173,21 +173,35 @@ def submit_pyrosar_gamma_workflow(
         output_dir.mkdir(parents=True)
 
     # Function to get filepaths on NCI
+    # This function uses recursion. It begins by checking if the input string is any of
+    # A Sentinel-1 ID, filename, or path, before assuming that the user has provided a file
+    # containing these items. It will then open the file, and apply the previous checks to
+    # the contents line-by-line.
     def _get_nci_s1_filepath(input: str) -> list[Path]:
         input_as_path = Path(input)
+
+        # Check if input string is a Sentinel-1 ID
         if is_s1_id(input):
             click.echo(f"A Sentinel-1 id was passed: {input}")
             filepath = find_scene_file_from_id(input)
             return [filepath]
+
+        # Check if input string is a Sentinel-1 filename
         elif is_s1_filename(input):
             click.echo(f"A Sentinel-1 filename was passed: {input}")
             scene_id = PurePath(input).stem
             filepath = find_scene_file_from_id(scene_id)
             return [filepath]
+
+        # Check if the input string is a file
         elif input_as_path.is_file():
+            # If the file ends in .SAFE, it's a path to a Sentinel-1 scene
             if input_as_path.suffix == "SAFE":
                 click.echo(f"A Sentinel-1 file path was passed: {input_as_path}")
                 return [input_as_path]
+
+            # Otherwise, open the file and process the content line-by-line, using the same
+            # logic above (ID, filename, or path)
             else:
                 filepaths = []
                 click.echo("A file was passed, attempting to open and process contents")
@@ -196,6 +210,8 @@ def submit_pyrosar_gamma_workflow(
                         line_path = _get_nci_s1_filepath(line.rstrip())
                         filepaths.extend(line_path)
                 return filepaths
+
+        # If unsuccessful, raise an error for the user.
         else:
             raise ValueError(
                 "scene must be a valid Sentinel-1 id/filename/path, or a file containing valid Sentinel-1 ids/filenames/paths"
