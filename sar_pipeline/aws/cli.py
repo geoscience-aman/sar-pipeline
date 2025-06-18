@@ -241,26 +241,42 @@ def get_data_for_scene_and_make_run_config(
         )
 
     elif scene_data_source == "CDSE":
-        # burst information must be taken from a downloaded scene
-        logger.info(f"Downloading SLC for scene : {scene}")
-        SCENE_PATH, cdse_scene_metadata = download_slc_from_cdse(scene, scene_folder)
-        scene_polygon = shape(cdse_scene_metadata["geometry"])
-        polarisation_list = cdse_scene_metadata["properties"]["polarisation"].split("&")
-        input_scene_url = cdse_scene_metadata["properties"]["services"]["download"][
-            "url"
-        ]
-        # get burst data from the downloaded slc
-        slc_bursts_info = []
-        logger.info(f"Getting burst information from the downloaded scene slc file")
-        logger.info(f"Scene polarisations : {polarisation_list}")
-        for pol in polarisation_list:
-            slc_bursts_info += s1_info.get_bursts(SCENE_PATH, pol=pol.lower())
-            all_slc_burst_id_list = [str(b.burst_id) for b in slc_bursts_info]
-            all_slc_burst_st_list = [b.sensing_start for b in slc_bursts_info]
+        try:
+            # try to find bursts on ASF first so download is not done until required
+            logger.info(f"Querying ASF for scene burst id's")
+            all_slc_burst_id_list, all_slc_burst_st_list = (
+                get_burst_ids_and_start_times_for_scene_from_asf(scene)
+            )
+            logger.info(
+                f"{len(all_slc_burst_id_list)} burst ids found for scene from ASF API"
+            )
+            SCENE_PATH = None  # set flag so we know to download
+        except FileExistsError:
+            logger.info(f"Burst id's not found on ASF, downloading scene from CDSE")
+            # burst information must be taken from a downloaded scene
+            logger.info(f"Downloading SLC for scene : {scene}")
+            SCENE_PATH, cdse_scene_metadata = download_slc_from_cdse(
+                scene, scene_folder
+            )
+            scene_polygon = shape(cdse_scene_metadata["geometry"])
+            polarisation_list = cdse_scene_metadata["properties"]["polarisation"].split(
+                "&"
+            )
+            input_scene_url = cdse_scene_metadata["properties"]["services"]["download"][
+                "url"
+            ]
+            # get burst data from the downloaded slc
+            slc_bursts_info = []
+            logger.info(f"Getting burst information from the downloaded scene slc file")
+            logger.info(f"Scene polarisations : {polarisation_list}")
+            for pol in polarisation_list:
+                slc_bursts_info += s1_info.get_bursts(SCENE_PATH, pol=pol.lower())
+                all_slc_burst_id_list = [str(b.burst_id) for b in slc_bursts_info]
+                all_slc_burst_st_list = [b.sensing_start for b in slc_bursts_info]
 
-        logger.info(
-            f"{len(all_slc_burst_id_list)} burst ids found for scene in the slc"
-        )
+            logger.info(
+                f"{len(all_slc_burst_id_list)} burst ids found for scene in the slc"
+            )
 
     # Limit the bursts to be processed if a list has been provided
     if burst_id_list:
@@ -310,6 +326,15 @@ def get_data_for_scene_and_make_run_config(
         polarisation_list = asf_scene_metadata.properties["polarization"].split("+")
         input_scene_url = asf_scene_metadata.properties["url"]
 
+    elif scene_data_source == "CDSE" and SCENE_PATH is None:
+        logger.info(f"Downloading SLC for scene : {scene}")
+        SCENE_PATH, cdse_scene_metadata = download_slc_from_cdse(scene, scene_folder)
+        scene_polygon = shape(cdse_scene_metadata["geometry"])
+        polarisation_list = cdse_scene_metadata["properties"]["polarisation"].split("&")
+        input_scene_url = cdse_scene_metadata["properties"]["services"]["download"][
+            "url"
+        ]
+
     # # download the orbits
     logger.info(f"Downloading Orbits for scene : {scene}")
     ORBIT_PATHS = download_orbits(
@@ -330,6 +355,11 @@ def get_data_for_scene_and_make_run_config(
         logger.warning("The scene crosses the antimeridian, correcting bounds")
         bounds = get_correct_bounds_from_shape_at_antimeridian(scene_polygon)
         logger.info(f"The scene bounds are : {bounds}")
+        # increase the buffer to ensure DEM sufficiently covers area
+        # shape is a little odd due to merging either side of AM
+        cop30_buffer_degrees = 0.8
+    else:
+        cop30_buffer_degrees = 0.3
 
     logger.info(f"Downloading DEM type `{dem_type}` to path : {DEM_PATH}")
     if dem_type == "cop_glo30":
@@ -339,7 +369,7 @@ def get_data_for_scene_and_make_run_config(
             ellipsoid_heights=True,
             adjust_at_high_lat=True,
             buffer_pixels=None,
-            buffer_degrees=0.3,
+            buffer_degrees=cop30_buffer_degrees,
             cop30_folder_path=dem_folder,
             geoid_tif_path=dem_folder / f"{scene}_geoid.tif",
             download_dem_tiles=True,
@@ -352,6 +382,7 @@ def get_data_for_scene_and_make_run_config(
             bounds_src_crs=4326,
             save_path=DEM_PATH,
             resolution=dem_resolution,
+            buffer_pixels=500,
             ellipsoid_heights=True,
             download_geoid=True,
             geoid_tif_path=dem_folder / f"{scene}_geoid.tif",
