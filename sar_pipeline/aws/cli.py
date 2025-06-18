@@ -330,6 +330,11 @@ def get_data_for_scene_and_make_run_config(
         logger.warning("The scene crosses the antimeridian, correcting bounds")
         bounds = get_correct_bounds_from_shape_at_antimeridian(scene_polygon)
         logger.info(f"The scene bounds are : {bounds}")
+        # increase the buffer to ensure DEM sufficiently covers area
+        # shape is a little odd due to merging either side of AM
+        cop30_buffer_degrees = 0.8
+    else:
+        cop30_buffer_degrees = 0.3
 
     logger.info(f"Downloading DEM type `{dem_type}` to path : {DEM_PATH}")
     if dem_type == "cop_glo30":
@@ -339,7 +344,7 @@ def get_data_for_scene_and_make_run_config(
             ellipsoid_heights=True,
             adjust_at_high_lat=True,
             buffer_pixels=None,
-            buffer_degrees=0.3,
+            buffer_degrees=cop30_buffer_degrees,
             cop30_folder_path=dem_folder,
             geoid_tif_path=dem_folder / f"{scene}_geoid.tif",
             download_dem_tiles=True,
