@@ -10,8 +10,16 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+
       - name: Install zip tool
         uses: montudor/action-zip@v1
+
+      - name: Install setuptools_scm
+        run: pip install setuptools_scm
+
+      - name: Generate _version.py
+        run: python setup.py egg_info
+
       - name: Prepare deployment package
         run: |
           mkdir lambda-deploy
@@ -23,6 +31,7 @@ jobs:
         run: |
           cd lambda-deploy
           zip -r ../code.zip .
+          
       - name: AWS CLI v2
         uses: imehedi/actions-awscli-v2@latest
         with:
