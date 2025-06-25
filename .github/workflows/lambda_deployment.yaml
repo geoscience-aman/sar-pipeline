@@ -12,8 +12,17 @@ jobs:
       - uses: actions/checkout@v2
       - name: Install zip tool
         uses: montudor/action-zip@v1
+      - name: Prepare deployment package
+        run: |
+          mkdir lambda-deploy
+          cp src/lambda_function.py lambda-deploy/
+          cp -r sar_pipeline lambda-deploy/
+          # copy other dependencies if needed
+
       - name: Create Zip file for Lambda function
-        run: zip -r code.zip .
+        run: |
+          cd lambda-deploy
+          zip -r ../code.zip .
       - name: AWS CLI v2
         uses: imehedi/actions-awscli-v2@latest
         with:
@@ -24,3 +33,11 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: "ap-southeast-2"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
