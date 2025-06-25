@@ -9,37 +9,39 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
-      - name: Install build tools
-        run: pip install build setuptools setuptools_scm wheel
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
 
-      - name: Build package (generates _version.py)
-        run: python -m build --sdist --wheel
+      - name: Prepare deployment folder
+        run: mkdir lambda-deploy
 
-      - name: Prepare deployment package
+      - name: Install dependencies in Lambda-compatible environment
+        uses: addnab/docker-run-action@v3
+        with:
+          image: public.ecr.aws/lambda/python:3.11
+          options: -v ${{ github.workspace }}:/var/task
+          run: |
+            pip install shapely asf-search boto3 numpy rasterio h5py -t lambda-deploy/
+
+      - name: Copy your code into deployment folder
         run: |
-          mkdir lambda-deploy
           cp src/lambda_function.py lambda-deploy/
           cp -r sar_pipeline lambda-deploy/
 
-      - name: Install dependencies 
-        run: | 
-          pip install --target=lambda-deploy asf-search
-          pip install --target=lambda-deploy --upgrade shapely
-
-      - name: Create Zip file for Lambda function
+      - name: Zip deployment package
         run: |
           cd lambda-deploy
           zip -r ../code.zip .
-          
-      - name: AWS CLI v2
+
+      - name: Deploy to AWS Lambda
         uses: imehedi/actions-awscli-v2@latest
         with:
-          args: "lambda update-function-code \
-            --function-name arn:aws:lambda:ap-southeast-2:451924316694:function:s1-rtc-check-static-layers-exist \
-            --zip-file fileb://code.zip"
+          args: lambda update-function-code --function-name arn:aws:lambda:ap-southeast-2:451924316694:function:s1-rtc-check-static-layers-exist --zip-file fileb://code.zip
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: "ap-southeast-2"
+          AWS_DEFAULT_REGION: ap-southeast-2
