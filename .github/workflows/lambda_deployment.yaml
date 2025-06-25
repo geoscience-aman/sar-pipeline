@@ -17,15 +17,15 @@ jobs:
       - name: Build package (generates _version.py)
         run: python -m build --sdist --wheel
 
-      - name: Install dependencies 
-        run: pip install --target=lambda_deploy \
-          asf-search
-
       - name: Prepare deployment package
         run: |
           mkdir lambda-deploy
           cp src/lambda_function.py lambda-deploy/
           cp -r sar_pipeline lambda-deploy/
+
+      - name: Install dependencies 
+        run: pip install --target=lambda-deploy \
+          asf-search
 
       - name: Create Zip file for Lambda function
         run: |
