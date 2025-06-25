@@ -11,11 +11,6 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
-
       - name: Prepare deployment folder
         run: mkdir lambda-deploy
 
@@ -25,6 +20,8 @@ jobs:
           image: public.ecr.aws/lambda/python:3.11
           options: -v ${{ github.workspace }}:/var/task
           run: |
+            yum install -y gcc gcc-c++ make
+            pip install --upgrade pip
             pip install shapely asf-search boto3 numpy rasterio h5py -t lambda-deploy/
 
       - name: Copy your code into deployment folder
