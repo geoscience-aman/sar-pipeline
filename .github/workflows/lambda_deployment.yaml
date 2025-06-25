@@ -9,36 +9,37 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v2
 
-      - name: Prepare deployment folder
-        run: mkdir lambda-deploy
+      - name: Install build tools
+        run: pip install build setuptools setuptools_scm wheel
 
-      - name: Install dependencies in Lambda-compatible environment
-        uses: addnab/docker-run-action@v3
-        with:
-          image: public.ecr.aws/lambda/python:3.11
-          options: -v ${{ github.workspace }}:/var/task
-          run: |
-            yum install -y gcc gcc-c++ make
-            pip install --upgrade pip
-            pip install shapely asf-search boto3 numpy rasterio h5py -t lambda-deploy/
+      - name: Build package (generates _version.py)
+        run: python -m build --sdist --wheel
 
-      - name: Copy your code into deployment folder
+      - name: Prepare deployment package
         run: |
+          mkdir lambda-deploy
           cp src/lambda_function.py lambda-deploy/
           cp -r sar_pipeline lambda-deploy/
 
-      - name: Zip deployment package
+      - name: Install dependencies 
+        run: | 
+          pip install --target=lambda-deploy \
+          asf-search
+
+      - name: Create Zip file for Lambda function
         run: |
           cd lambda-deploy
           zip -r ../code.zip .
-
-      - name: Deploy to AWS Lambda
+          
+      - name: AWS CLI v2
         uses: imehedi/actions-awscli-v2@latest
         with:
-          args: lambda update-function-code --function-name arn:aws:lambda:ap-southeast-2:451924316694:function:s1-rtc-check-static-layers-exist --zip-file fileb://code.zip
+          args: "lambda update-function-code \
+            --function-name arn:aws:lambda:ap-southeast-2:451924316694:function:s1-rtc-check-static-layers-exist \
+            --zip-file fileb://code.zip"
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: ap-southeast-2
+          AWS_DEFAULT_REGION: "ap-southeast-2"
