@@ -14,8 +14,8 @@ jobs:
       - name: Install zip tool
         uses: montudor/action-zip@v1
 
-      - name: Install setuptools_scm
-        run: pip install setuptools_scm
+      - name: Install build tools
+        run: pip install build setuptools setuptools_scm wheel
 
       - name: Build package (generates _version.py)
         run: python -m build --sdist --wheel
