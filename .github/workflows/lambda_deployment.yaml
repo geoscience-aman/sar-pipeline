@@ -2,43 +2,48 @@ name: Deploy Lambda Function
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout repo
+        uses: actions/checkout@v2
 
-      - name: Install zip tool
-        uses: montudor/action-zip@v1
+      - name: Set up Miniconda and create environment
+        uses: conda-incubator/setup-miniconda@v2
+        with:
+          environment-file: environment.yaml
+          activate-environment: myenv
+          python-version: 3.10  # adjust to your Python version
 
-      - name: Install build tools
-        run: pip install build setuptools setuptools_scm wheel
+      - name: Export pip packages to requirements.txt
+        run: conda run -n myenv pip freeze > requirements.txt
 
-      - name: Build package (generates _version.py)
-        run: python -m build --sdist --wheel
+      - name: Prepare deployment folder
+        run: mkdir lambda-deploy
 
-      - name: Prepare deployment package
-        run: |
-          mkdir lambda-deploy
-          cp src/lambda_function.py lambda-deploy/
-          cp -r sar_pipeline lambda-deploy/
-          # copy other dependencies if needed
+      - name: Install dependencies into deployment folder
+        run: python -m pip install -r requirements.txt -t lambda-deploy/
 
-      - name: Create Zip file for Lambda function
+      - name: Install your package into deployment folder (generates _version.py)
+        run: python -m pip install . -t lambda-deploy/
+
+      - name: Copy Lambda handler
+        run: cp src/lambda_function.py lambda-deploy/
+
+      - name: Create deployment zip
         run: |
           cd lambda-deploy
           zip -r ../code.zip .
-          
-      - name: AWS CLI v2
+
+      - name: Deploy to AWS Lambda
         uses: imehedi/actions-awscli-v2@latest
         with:
-          args: "lambda update-function-code \
-            --function-name arn:aws:lambda:ap-southeast-2:451924316694:function:s1-rtc-check-static-layers-exist \
-            --zip-file fileb://code.zip"
+          args: lambda update-function-code --function-name YOUR_LAMBDA_NAME --zip-file fileb://code.zip
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: "ap-southeast-2"
+          AWS_DEFAULT_REGION: ap-southeast-2
