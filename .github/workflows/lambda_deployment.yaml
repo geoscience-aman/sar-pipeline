@@ -24,8 +24,9 @@ jobs:
           cp -r sar_pipeline lambda-deploy/
 
       - name: Install dependencies 
-        run: pip install --target=lambda-deploy \
-          asf-search
+        run: | 
+          pip install --target=lambda-deploy asf-search
+          pip install --target=lambda-deploy --upgrade shapely
 
       - name: Create Zip file for Lambda function
         run: |
